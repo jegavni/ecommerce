@@ -1,0 +1,36 @@
+# ========================
+# Backend
+# ========================
+/backend/node_modules/
+/backend/uploads/
+/backend/.env
+/backend/database/
+# Log files
+/backend/npm-debug.log*
+/backend/yarn-debug.log*
+
+# OS / IDE
+/backend/.vscode/
+/backend/.DS_Store
+/backend/Thumbs.db
+
+# ========================
+# Frontend
+# ========================
+/frontend/node_modules/
+/frontend/build/
+/frontend/dist/
+/frontend/.env
+/frontend/.cache/
+
+# OS / IDE
+/frontend/.vscode/
+/frontend/.DS_Store
+/frontend/Thumbs.db
+
+# ========================
+# Optional / Misc
+# ========================
+# Temporary files
+*.log
+*.tmp
