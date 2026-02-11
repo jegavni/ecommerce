@@ -1,19 +1,8 @@
 import express from "express";
-// import razorpay from "../config/razorpay.js";
+import { createRazorpayOrder } from "../controllers/payment.controller.js";
 
 const router = express.Router();
 
-router.post("/create-order", async (req, res) => {
-  const { amount } = req.body;
-
-  const options = {
-    amount: amount * 100, // INR → paise
-    currency: "INR",
-    receipt: `order_${Date.now()}`,
-  };
-
-  const order = await razorpay.orders.create(options);
-  res.json(order);
-});
+router.post("/create-order", createRazorpayOrder);
 
 export default router;

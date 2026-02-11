@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { useUser } from "../context/userContext";
+import { useSelector } from "react-redux";
+import axios from "../utils/axiosInstance";
 import {
   Container,
   Card,
@@ -11,25 +11,39 @@ import {
 } from "@mui/material";
 
 const Orders = () => {
-  const { user } = useUser();
+  const {user,token}  = useSelector((state) => state.user);
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!user) return;
 
     const fetchOrders = async () => {
       try {
+        setLoading(true);
         const res = await axios.get(
-          `http://localhost:5000/api/orders/users/${user._id}`
+          `/orders/users/${user._id}`,
+          {
+            headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
         );
         setOrders(res.data);
       } catch (err) {
         console.error(err);
+        setError("Failed to load orders");
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchOrders();
   }, [user]);
+
+  if (loading) return <Typography>Loading orders...</Typography>;
+      if (error) return <Typography color="error">{error}</Typography>;
 
   return (
     <Container sx={{ mt: 4 }}>
@@ -37,8 +51,12 @@ const Orders = () => {
         📦 My Orders
       </Typography>
 
+    
+
       {orders.length === 0 && (
-        <Typography>No orders found</Typography>
+        <Typography align="center" mt={5}>
+          🛒 You haven’t placed any orders yet
+        </Typography>
       )}
 
       {orders.map((order) => (

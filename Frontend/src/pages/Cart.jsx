@@ -55,14 +55,19 @@ const Cart = () => {
     const fetchAddresses = async () => {
       try {
         setLoadingAddresses(true);
+
         const res = await axios.get(
           `http://localhost:5000/api/users/${user._id}/addresses`
         );
 
-        setAddresses(res.data);
-        setSelectedAddress(
-          res.data.find((a) => a.isDefault) || res.data[0] || null
-        );
+        const addressList = res.data.addresses || res.data || [];
+
+        setAddresses(addressList);
+
+        const defaultAddress =
+          addressList.find((a) => a.isDefault) || addressList[0] || null;
+
+        setSelectedAddress(defaultAddress);
       } catch (err) {
         toast.error("❌ Failed to load addresses");
       } finally {
@@ -72,6 +77,7 @@ const Cart = () => {
 
     fetchAddresses();
   }, [user?._id]);
+
 
   /* =======================
      ADD / EDIT ADDRESS
@@ -111,29 +117,64 @@ const Cart = () => {
   /* =======================
      PLACE ORDER
   ======================= */
-  const placeOrder = async () => {
+  const makePayment = async () => {
     if (!user) return toast.error("❌ Please login");
 
-    try {
-      await axios.post("http://localhost:5000/api/orders", {
-        userId: user._id,
-        items: cart.map((item) => ({
-          productId: item._id,
-          title: item.title,
-          price: Number(item.price),
-          qty: Number(item.qty),
-        })),
-        totalAmount,
-        paymentMethod: "COD",
-        paymentStatus: "PENDING",
-      });
+    if (!selectedAddress)
+      return toast.error("❌ Please select a delivery address");
 
-      toast.success("🎉 Order placed successfully");
-      dispatch(clearCart());
+    try {
+      // 1️⃣ Create Razorpay Order from backend
+      const { data } = await axios.post(
+        "http://localhost:5000/api/payment/create-order",
+        { amount: totalAmount }
+      );
+
+      const options = {
+        key: data.key,
+        amount: data.order.amount,
+        currency: data.order.currency,
+        order_id: data.order.id,
+
+
+        handler: async function (response) {
+          // 2️⃣ After Successful Payment → Save Order in DB
+          await axios.post("http://localhost:5000/api/orders", {
+            userId: user._id,
+            items: cart.map((item) => ({
+              productId: item._id,
+              title: item.title,
+              price: Number(item.price),
+              qty: Number(item.qty),
+            })),
+            address: selectedAddress,
+            totalAmount,
+            paymentMethod: "Razorpay",
+            paymentStatus: "PAID",
+            razorpayPaymentId: response.razorpay_payment_id,
+          });
+
+          toast.success("🎉 Payment Successful & Order Placed!");
+          dispatch(clearCart());
+        },
+
+        prefill: {
+          name: user.name,
+          email: user.email,
+        },
+
+        theme: {
+          color: "#1976d2",
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      toast.error("❌ Failed to place order");
+      toast.error("❌ Payment Failed");
     }
   };
+
 
   /* =======================
      EMPTY CART
@@ -173,10 +214,12 @@ const Cart = () => {
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                   <IconButton
+                    disabled={item.qty === 1}
                     onClick={() => dispatch(decreaseQty(item._id))}
                   >
                     <RemoveIcon />
                   </IconButton>
+
 
                   <Typography>{item.qty}</Typography>
 
@@ -246,9 +289,9 @@ const Cart = () => {
         color="success"
         fullWidth
         sx={{ mt: 3, py: 1.5 }}
-        onClick={placeOrder}
+        onClick={makePayment}
       >
-        Place Order
+        Pay Now
       </Button>
 
       {/* ADDRESS MODAL */}

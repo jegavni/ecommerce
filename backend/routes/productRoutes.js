@@ -1,26 +1,36 @@
 import express from "express";
-import Product from "../models/product.js"; 
+import {
+  createProduct,
+  getMyProducts,
+  getApprovedProducts,
+  deleteProduct,
+  getProductById,
+} from "../controllers/productController.js";
+import { isAdmin } from "../middleware/roleMiddleware.js";
+import { protect, protectSeller } from "../middleware/authMiddleware.js";
+import { isSeller } from "../middleware/roleMiddleware.js";
+import { uploadProductImages } from "../middleware/uploadMiddleware.js";
+import { updateProduct } from "../controllers/productController.js";
+import { get } from "mongoose";
 
 const router = express.Router();
+console.log("Product routes loaded");
 
-/**
- * GET ALL PRODUCTS
- * GET /api/products
- * GET /api/products?category=Mobiles
- */
-router.get("/", async (req, res) => {
-  try {
-    const { category } = req.query;
-
-    const products =
-      category && category !== "Top Deals"
-        ? await Product.find({ category })
-        : await Product.find();
-
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
+router.get("/", getApprovedProducts);
+router.get("/:id", getProductById);
+router.post("/createProduct", protect, isSeller, createProduct);
+router.get("/my", protectSeller, isSeller, getMyProducts);
+router.put(
+  "/:id",
+  protectSeller,
+  isSeller,
+  uploadProductImages,
+  updateProduct
+);
+router.delete(
+  "/:id",
+  protectSeller,       // ✅ user must be logged in
+  isAdmin,     // ✅ user must be admin
+  deleteProduct
+);
 export default router;

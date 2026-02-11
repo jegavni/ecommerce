@@ -1,5 +1,14 @@
 import mongoose from "mongoose";
-import addressSchema  from "./addressSchema.js";
+import addressSchema from "./addressSchema.js";
+
+const sellerProfileSchema = new mongoose.Schema(
+  {
+    storeName: { type: String, required: true },
+    gstNumber: { type: String },
+    isVerified: { type: Boolean, default: false },
+  },
+  { _id: false }
+);
 
 const userSchema = new mongoose.Schema(
   {
@@ -23,10 +32,17 @@ const userSchema = new mongoose.Schema(
       minlength: 6,
     },
 
+    role: {
+      type: String,
+      enum: ["user", "seller", "admin"],
+      default: "user",
+    },
+
+    sellerProfile: sellerProfileSchema,
+
     resetPasswordToken: String,
     resetPasswordExpire: Date,
 
-    // ✅ multiple addresses
     addresses: {
       type: [addressSchema],
       default: [],
@@ -35,4 +51,10 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-export default mongoose.model("User", userSchema);
+/**
+ * ✅ IMPORTANT
+ * Model name MUST be capitalized & consistent
+ */
+const User = mongoose.models.User || mongoose.model("User", userSchema);
+
+export default User;

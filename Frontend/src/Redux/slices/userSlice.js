@@ -10,7 +10,8 @@ export const loginUser = createAsyncThunk(
     try {
       const { data } = await axios.post(
         "http://localhost:5000/api/auth/login",
-        credentials
+        credentials,
+        { withCredentials: true }
       );
       return data; // { user, token }
     } catch (err) {
@@ -39,7 +40,11 @@ const userSlice = createSlice({
       state.token = null;
       state.error = null;
     },
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
   },
+
 
   extraReducers: (builder) => {
     builder
@@ -60,5 +65,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { logout } = userSlice.actions;
+export const { logout,setUser } = userSlice.actions;
 export default userSlice.reducer;

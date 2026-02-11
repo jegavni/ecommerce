@@ -45,16 +45,39 @@ export const login = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-    res.json({
+    // ✅ SET COOKIE (THIS WAS MISSING)
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,        // MUST be false on localhost
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60*24 * 60 * 1000,
+    });
+
+    res.status(200).json({
+      message: "Login successful",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
       token,
-      user: { _id: user._id, name: user.name, email: user.email },
     });
   } catch (error) {
     console.error(error);

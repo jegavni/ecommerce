@@ -1,56 +1,11 @@
-import express from "express";
-import bcrypt from "bcryptjs";
 import User from "../models/user.js";
 
-const router = express.Router();
-
 /* =========================
-   AUTH
+   GET ALL ADDRESSES
 ========================= */
 
-// REGISTER
-router.post("/register", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-
-    if (!name || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
-    }
-
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-    });
-
-    res.status(201).json({
-      message: "User registered successfully",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-/* =========================
-   ADDRESSES
-========================= */
-
-// GET ALL ADDRESSES
-router.get("/:userId/addresses", async (req, res) => {
-  console.log("GET /api/users/:userId/addresses called");
-
+export const getAddresses = async (req, res) => {
+    console.log("GET /api/users/:userId/addresses called");
   try {
     const user = await User.findById(req.params.userId).select("addresses");
 
@@ -62,10 +17,13 @@ router.get("/:userId/addresses", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+};
 
-// ADD NEW ADDRESS
-router.post("/:userId/addresses", async (req, res) => {
+/* =========================
+   ADD ADDRESS
+========================= */
+
+export const addAddress = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
 
@@ -75,7 +33,6 @@ router.post("/:userId/addresses", async (req, res) => {
 
     const newAddress = req.body;
 
-    // 🔁 Duplicate address check
     const duplicate = user.addresses.some((addr) =>
       addr.name === newAddress.name &&
       addr.phone === newAddress.phone &&
@@ -91,12 +48,10 @@ router.post("/:userId/addresses", async (req, res) => {
       });
     }
 
-    // ⭐ Handle default address
     if (newAddress.isDefault) {
       user.addresses.forEach((addr) => (addr.isDefault = false));
     }
 
-    // 🟢 First address → default
     if (user.addresses.length === 0) {
       newAddress.isDefault = true;
     }
@@ -111,10 +66,13 @@ router.post("/:userId/addresses", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+};
 
-// UPDATE ADDRESS
-router.put("/:userId/addresses/:addressId", async (req, res) => {
+/* =========================
+   UPDATE ADDRESS
+========================= */
+
+export const updateAddress = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
 
@@ -130,7 +88,6 @@ router.put("/:userId/addresses/:addressId", async (req, res) => {
 
     Object.assign(address, req.body);
 
-    // ⭐ If set default → unset others
     if (req.body.isDefault) {
       user.addresses.forEach((addr) => {
         addr.isDefault = addr._id.equals(address._id);
@@ -146,10 +103,13 @@ router.put("/:userId/addresses/:addressId", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
+};
 
-// SET DEFAULT ADDRESS
-router.put("/:userId/addresses/:addressId/default", async (req, res) => {
+/* =========================
+   SET DEFAULT ADDRESS
+========================= */
+
+export const setDefaultAddress = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
 
@@ -170,6 +130,4 @@ router.put("/:userId/addresses/:addressId/default", async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
-});
-
-export default router;
+};

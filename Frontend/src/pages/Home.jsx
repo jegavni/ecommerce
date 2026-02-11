@@ -4,86 +4,77 @@ import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import {
-  Box,
-  Grid,
-  Card,
-  CardMedia,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  Container,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Drawer,
-  Divider,
-} from "@mui/material";
+import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Card, CardContent } from "@/components/ui/card.tsx";
 
-import MenuIcon from "@mui/icons-material/Menu";
-import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import { Home, User, Wallet, ShoppingCart, Bot } from "lucide-react";
+import ProductReviewCard from "../components/ProductReviewCard";
 
 import { addToCart } from "../Redux/slices/cartSlice";
 import { logout as logoutUser } from "../Redux/slices/userSlice";
 
-const Home = () => {
+const HomePage = () => {
+  const [activeSection, setActiveSection] = useState("home");
   const [products, setProducts] = useState([]);
-  const [deals, setDeals] = useState([]);
   const [search, setSearch] = useState("");
-  const [activeDeal, setActiveDeal] = useState(0);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [showHeader, setShowHeader] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+  const [pendingProducts, setPendingProducts] = useState([]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const { items: cart } = useSelector((state) => state.cart);
-  const { user } = useSelector((state) => state.user);
-
-  /* ---------------- FETCH DATA ---------------- */
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      const res = await axios.get("http://localhost:5000/api/products");
-      setProducts(res.data);
-      setDeals(res.data.slice(0, 5));
-    } catch (err) {
-      console.error(err);
-    }
+  const { user, token } = useSelector((state) => state.user);
+  const fetchPendingProducts = () => {
+    axios
+      .get("http://localhost:5000/api/admin/products/pending", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => setPendingProducts(res.data))
+      .catch(console.error);
   };
 
-  /* ---------------- AUTO SLIDE DEALS ---------------- */
+  // Fetch products
   useEffect(() => {
-    if (deals.length <= 1) return;
-    const timer = setInterval(
-      () => setActiveDeal((prev) => (prev + 1) % deals.length),
-      3000
-    );
-    return () => clearInterval(timer);
-  }, [deals]);
+    axios.get("http://localhost:5000/api/products").then((res) => {
+      setProducts(res.data.products || []);
+    });
+  }, []);
 
-  /* ---------------- ADD TO CART ---------------- */
+  useEffect(() => {
+    if (activeSection === "you" && user?.role === "admin") {
+      fetchPendingProducts();
+    }
+  }, [activeSection, user]);
+
+
+
+  // Hide header on scroll down
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > lastScrollY) {
+        setShowHeader(false);
+      } else {
+        setShowHeader(true);
+      }
+      setLastScrollY(window.scrollY);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [lastScrollY]);
+
   const handleAddToCart = (product) => {
     if (!user) {
-      toast.info("Please login to add items to cart");
+      toast.info("Please login first");
       navigate("/login");
       return;
     }
     dispatch(addToCart(product));
-    toast.success(`${product.title} added to cart`);
-  };
-
-  /* ---------------- LOGOUT ---------------- */
-  const handleLogout = () => {
-    dispatch(logoutUser());
-    toast.info("Logged out successfully");
-    navigate("/login");
+    toast.success("Added to cart");
   };
 
   const filteredProducts = products.filter((p) =>
@@ -91,197 +82,199 @@ const Home = () => {
   );
 
   return (
-    <Container maxWidth={false} disableGutters>
-      {/* ---------------- HEADER ---------------- */}
-      <Box
-        sx={{
-          position: "sticky",
-          top: 0,
-          zIndex: 1000,
-          bgcolor: "white",
-          boxShadow: 1,
-          px: 2,
-          py: 1,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
+    <div className="pb-20">
+      {/* TOP SEARCH BAR */}
+      <div
+        className={`bg-[#131921] p-2 sticky top-0 z-50 transition-transform duration-300 ${showHeader ? "translate-y-0" : "-translate-y-full"
+          }`}
       >
-        <Typography variant="h5" fontWeight="bold" color="warning.main">
-          🛍️ Amazon Clone
-        </Typography>
-
-        {user ? (
-          <IconButton onClick={() => setDrawerOpen(true)}>
-            <MenuIcon />
-          </IconButton>
-        ) : (
-          <Button variant="outlined" onClick={() => navigate("/login")}>
-            Login
-          </Button>
-        )}
-      </Box>
-
-      {/* ---------------- SEARCH ---------------- */}
-      <Box sx={{ px: 2, mt: 3 }}>
-        <TextField
-          fullWidth
-          placeholder="🔍 Search products"
+        <Input
+          placeholder="Search products or help"
+          className="bg-white w-full"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-      </Box>
+      </div>
 
-      {/* ---------------- DEALS CAROUSEL ---------------- */}
-      {deals.length > 0 && (
-        <Box sx={{ px: 2, mt: 4, position: "relative" }}>
-          <Card sx={{ borderRadius: 3, overflow: "hidden" }}>
-            <CardMedia
-              component="img"
-              height="320"
-              image={`http://localhost:5000/${deals[activeDeal].image}`}
-              alt={deals[activeDeal].title}
-            />
+      {/* PRODUCTS */}
+      {activeSection === "home" && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
+          {filteredProducts.map((product) => {
+            const isSellerOwner =
+              user?.role === "seller" &&
+              (product.seller === user?._id ||
+                product.seller?._id === user?._id);
+            console.log("img url 👉", product.images?.[0]);
 
-            <Box
-              sx={{
-                position: "absolute",
-                inset: 0,
-                background:
-                  "linear-gradient(to top, rgba(0,0,0,0.7), transparent)",
-                display: "flex",
-                alignItems: "flex-end",
-                p: 2,
-                color: "white",
-              }}
-            >
-              <Box>
-                <Typography variant="h5" fontWeight="bold">
-                  {deals[activeDeal].title}
-                </Typography>
-                <Typography variant="h6">
-                  ₹{deals[activeDeal].price}
-                </Typography>
-              </Box>
-            </Box>
-          </Card>
+            return (
+              <Card
+                key={product._id}
+                className="rounded-xl cursor-pointer hover:shadow-lg transition"
+                onClick={() => navigate(`/product/${product._id}`)}
 
-          <IconButton
-            onClick={() =>
-              setActiveDeal((prev) => (prev - 1 + deals.length) % deals.length)
-            }
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: 10,
-              bgcolor: "rgba(0,0,0,0.6)",
-              color: "white",
-            }}
-          >
-            <ArrowBackIosNewIcon />
-          </IconButton>
+              >
 
-          <IconButton
-            onClick={() => setActiveDeal((prev) => (prev + 1) % deals.length)}
-            sx={{
-              position: "absolute",
-              top: "50%",
-              right: 10,
-              bgcolor: "rgba(0,0,0,0.6)",
-              color: "white",
-            }}
-          >
-            <ArrowForwardIosIcon />
-          </IconButton>
-        </Box>
+                <img
+                  src={product.images?.[0]?.url || "/placeholder.png"}
+                  className="h-40 w-full object-contain p-2"
+                  alt={product.title}
+                />
+
+
+                <CardContent className="space-y-1">
+                  <p className="font-semibold truncate">{product.title}</p>
+                  <p className="text-green-600 font-bold">₹{product.price}</p>
+
+                  {/* ADD TO CART */}
+                  <Button
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddToCart(product);
+                    }}
+                  >
+                    Add to Cart
+                  </Button>
+
+                  {/* ✅ EDIT BUTTON – ONLY FOR SELLER & OWNER */}
+                  {isSellerOwner && (
+                    <Button
+                      variant="outline"
+                      className="w-full"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/seller/product/edit/${product._id}`);
+                      }}
+                    >
+                      Edit Product
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+
+        </div>
       )}
 
-      {/* ---------------- PRODUCTS ---------------- */}
-      <Grid container spacing={3} sx={{ px: 2, mt: 4 }}>
-        {filteredProducts.length === 0 && (
-          <Typography sx={{ mx: "auto", mt: 5 }}>
-            😕 No products found
-          </Typography>
-        )}
+      {activeSection === "you" && (
+        <div className="p-4 space-y-4">
+          <Card className="rounded-xl">
+            <CardContent className="space-y-3">
+              <h2 className="text-lg font-bold">Your Account</h2>
 
-        {filteredProducts.map((product) => (
-          <Grid item xs={12} sm={6} md={3} key={product._id}>
-            <Card
-              sx={{
-                height: "100%",
-                borderRadius: 3,
-                transition: "0.3s",
-                "&:hover": {
-                  transform: "translateY(-5px)",
-                  boxShadow: 6,
-                },
-              }}
-            >
-              <CardMedia
-                component="img"
-                height="180"
-                image={`http://localhost:5000/${product.image}`}
-                alt={product.title}
-                sx={{ objectFit: "contain", p: 1, cursor: "pointer" }}
-                onClick={() => navigate(`/product/${product._id}`)}
-              />
+              {user ? (
+                <>
+                  <p><strong>Name:</strong> {user.name}</p>
+                  <p><strong>Email:</strong> {user.email}</p>
+                  <p><strong>Role:</strong> {user.role}</p>
 
-              <CardContent>
-                <Typography noWrap fontWeight="bold">
-                  {product.title}
-                </Typography>
+                  {/* SELLER / CUSTOMER */}
+                  {user.role === "seller" ? (
+                    <Button className="w-full" onClick={() => navigate("/addproduct")}>
+                      Add Products
+                    </Button>
+                  ) : user.role !== "admin" ? (
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={() => navigate("/become-seller")}
+                    >
+                      Become a Seller
+                    </Button>
+                  ) : null}
 
-                <Typography color="success.main" fontWeight="bold">
-                  ₹{product.price}
-                </Typography>
+                  {/* ADMIN: PENDING APPROVALS */}
+                  {user.role === "admin" && (
+                    <div className="space-y-3 pt-4">
+                      <h3 className="font-semibold text-orange-600">
+                        Pending Approvals
+                      </h3>
 
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="warning"
-                  startIcon={<ShoppingCartIcon />}
-                  sx={{ mt: 1 }}
-                  onClick={() => handleAddToCart(product)}
-                >
-                  {user ? "Add to Cart" : "Login to Add"}
+                      {pendingProducts.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                          No pending products 🎉
+                        </p>
+                      ) : (
+                        pendingProducts.map((product) => (
+                          <ProductReviewCard
+                            key={product._id}
+                            product={product}
+                            onAction={fetchPendingProducts}
+                          />
+                        ))
+                      )}
+                    </div>
+                  )}
+
+                  {/* ORDERS */}
+                  <Button
+                    className="w-full"
+                    variant="secondary"
+                    onClick={() => navigate("/orders")}
+                  >
+                    Recent Orders
+                  </Button>
+
+                  {/* LOGOUT */}
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={() => {
+                      dispatch(logoutUser());
+                      navigate("/login");
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button className="w-full" onClick={() => navigate("/login")}>
+                  Login
                 </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* ---------------- DRAWER ---------------- */}
-      <Drawer
-        anchor="right"
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-      >
-        <Box sx={{ width: 260, p: 2 }}>
-          <Typography variant="h6">Hello, {user?.name}</Typography>
-          <Divider sx={{ my: 2 }} />
 
-          <List>
-            <ListItem button onClick={() => navigate("/dashboard")}>
-              <ListItemText primary="📊 Dashboard" />
-            </ListItem>
-            <ListItem button onClick={() => navigate("/orders")}>
-              <ListItemText primary="📦 Orders" />
-            </ListItem>
-            <ListItem button onClick={() => navigate("/cart")}>
-              <ListItemText primary="🛒 Cart" />
-            </ListItem>
-            <ListItem button onClick={() => navigate("/profile")}>
-              <ListItemText primary="👤 Profile" />
-            </ListItem>
-            <ListItem button onClick={handleLogout}>
-              <ListItemText primary="🚪 Logout" />
-            </ListItem>
-          </List>
-        </Box>
-      </Drawer>
-    </Container>
+
+      {/* BOTTOM NAV */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2">
+        <NavItem
+          icon={<Home />}
+          label="Home"
+          active={activeSection === "home"}
+          onClick={() => setActiveSection("home")}
+        />
+        <NavItem
+          icon={<User />}
+          label="You"
+          active={activeSection === "you"}
+          onClick={() => setActiveSection("you")}
+        />
+        <NavItem icon={<Wallet />} label="Wallet" onClick={() => navigate("/wallet")} />
+        <NavItem
+          icon={<ShoppingCart />}
+          label={`Cart (${cart.length})`}
+          onClick={() => navigate("/cart")}
+        />
+        <NavItem icon={<Bot />} label="Rufus" />
+      </div>
+    </div>
   );
 };
 
-export default Home;
+const NavItem = ({ icon, label, onClick, active }) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center text-xs ${active ? "text-orange-500" : "text-gray-600"
+      }`}
+  >
+    {icon}
+    <span>{label}</span>
+  </button>
+);
+
+export default HomePage;
