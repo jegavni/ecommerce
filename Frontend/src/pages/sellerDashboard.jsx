@@ -6,7 +6,7 @@ import {
   Container,
   CircularProgress,
 } from "@mui/material";
-import SellerProductCard from "../components/SellerProductCard";
+import SellerProductCard from "../components/sellerProductCard";
 import AddProductForm from "../components/AddProduct"; // your add product form
 import { useSelector } from "react-redux";
 
