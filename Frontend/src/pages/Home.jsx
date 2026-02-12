@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input.tsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 
 import { Home, User, Wallet, ShoppingCart, Bot } from "lucide-react";
-import ProductReviewCard from "../components/ProductReviewCard";
+import ProductReviewCard from "../components/productReviewCard";
 
 import { addToCart } from "../Redux/slices/cartSlice";
 import { logout as logoutUser } from "../Redux/slices/userSlice";
