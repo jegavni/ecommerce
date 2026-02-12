@@ -22,7 +22,7 @@ import ProductDetails from "./pages/productDetails.jsx";
 import AddProduct from "./components/AddProduct.jsx";
 import SellerForm from "./pages/sellerForm";
 import AdminProduct from "./pages/AdminProduct";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/protectedRoute";
 
 import SellerDashboard from "./pages/sellerDashboard";
 // ✅ Get user safely from Redux
