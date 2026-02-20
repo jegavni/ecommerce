@@ -29,7 +29,12 @@ app.use(
   })
 );
 app.use(cors(
-  { origin:"http://localhost:5173",
+  { 
+    origin:[
+      "http://localhost:5173",
+      "https://ecommerce-t7cc.onrender.com"
+    ],
+    
     credentials:true,
     methods : ["GET","POST","PUT","DELETE"],
     allowedHeaders:["Content-Type","Authorization"],
@@ -43,7 +48,6 @@ app.use("/api/forget", forgetRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/deals", dealRoute);
 app.use("/api/orders", orderRoutes);
-app.use("/api/payment", paymentRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users",addressRoutes);
 app.use("/api/seller",sellerRoutes);
