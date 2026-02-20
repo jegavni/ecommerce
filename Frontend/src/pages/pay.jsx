@@ -1,0 +1,87 @@
+import { useState } from "react";
+import axios from "axios";
+import { toast } from "react-toastify";
+import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
+// import { Card, CardContent } from "@/components/ui/card";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
+
+const PayPage = () => {
+  const [amount, setAmount] = useState("");
+  const { user, token } = useSelector((state) => state.user);
+  const navigate = useNavigate();
+
+  const handlePayment = async () => {
+    if (!user) {
+      toast.info("Please login first");
+      navigate("/login");
+      return;
+    }
+
+    if (!amount || amount <= 0) {
+      toast.error("Enter valid amount");
+      return;
+    }
+
+    if (amount > user.wallet) {
+      toast.error("Insufficient wallet balance");
+      return;
+    }
+
+    try {
+      const res = await axios.post(
+        "http://localhost:5000/api/wallet/pay",
+        { amount: Number(amount) },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      toast.success("Payment Successful");
+      setAmount("");
+
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Payment Failed");
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-100 p-6 space-y-6">
+
+      <h1 className="text-3xl font-bold">Pay & Recharge</h1>
+
+      {/* Wallet Card */}
+      <Card className="rounded-xl">
+        <CardContent className="p-6">
+          <p className="text-gray-500">Wallet Balance</p>
+          <p className="text-3xl font-bold text-green-600">
+            ₹{user?.wallet || 0}
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Payment Card */}
+      <Card className="rounded-xl">
+        <CardContent className="space-y-4 p-6">
+          <Input
+            type="number"
+            placeholder="Enter amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
+
+          <Button className="w-full" onClick={handlePayment}>
+            Pay Now
+          </Button>
+        </CardContent>
+      </Card>
+
+    </div>
+  );
+};
+
+export default PayPage;

@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
+import { useDispatch } from "react-redux";
 
 import {
   Container,
@@ -13,7 +14,12 @@ import {
   Box,
 } from "@mui/material";
 
+import { loginUser } from "../Redux/slices/userSlice";
+
 const Register = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -24,41 +30,47 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
-
-  // Regex patterns
+  /* =======================
+     VALIDATION REGEX
+  ======================= */
   const nameRegex = /^[a-zA-Z ]{2,30}$/;
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{6,}$/;
   const phoneRegex = /^[6-9]\d{9}$/;
 
-  // Real-time validation function
+  /* =======================
+     VALIDATE SINGLE FIELD
+  ======================= */
   const validateField = (field, value) => {
     let errorMsg = "";
 
     switch (field) {
       case "name":
         if (!nameRegex.test(value)) {
-          errorMsg = "Name must be 2-30 letters and spaces only";
+          errorMsg = "Name must be 2-30 letters only";
         }
         break;
+
       case "email":
         if (!emailRegex.test(value)) {
           errorMsg = "Enter a valid email address";
         }
         break;
+
       case "password":
         if (!passwordRegex.test(value)) {
           errorMsg =
-            "Password must be 6+ chars, with uppercase, lowercase, number & special char";
+            "Min 6 chars with uppercase, lowercase, number & symbol";
         }
         break;
+
       case "phone":
         if (!phoneRegex.test(value)) {
-          errorMsg = "Enter a valid 10-digit phone number";
+          errorMsg = "Enter valid 10-digit phone number";
         }
         break;
+
       default:
         break;
     }
@@ -66,13 +78,17 @@ const Register = () => {
     setErrors((prev) => ({ ...prev, [field]: errorMsg }));
   };
 
-  // Handle input change
+  /* =======================
+     HANDLE INPUT CHANGE
+  ======================= */
   const handleChange = (field, value) => {
-    setForm({ ...form, [field]: value });
+    setForm((prev) => ({ ...prev, [field]: value }));
     validateField(field, value);
   };
 
-  // Final validation before submit
+  /* =======================
+     FINAL FORM CHECK
+  ======================= */
   const validateForm = () => {
     return (
       !errors.name &&
@@ -86,6 +102,9 @@ const Register = () => {
     );
   };
 
+  /* =======================
+     SUBMIT
+  ======================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -96,22 +115,53 @@ const Register = () => {
 
     try {
       setLoading(true);
-      await axios.post("http://localhost:5000/api/auth/register", form);
-      toast.success("✅ Registered successfully");
-      navigate("/login");
+
+      // ✅ Register user
+      await axios.post(
+        "http://localhost:5000/api/auth/register",
+        form,
+        { withCredentials: true }
+      );
+
+      // ✅ Auto login using Redux
+      const result = await dispatch(
+        loginUser({
+          email: form.email,
+          password: form.password,
+        })
+      );
+
+      if (loginUser.fulfilled.match(result)) {
+        toast.success("🎉 Account created & logged in!");
+        navigate("/");
+      } else {
+        toast.info("Registered! Please login.");
+        navigate("/login");
+      }
+
     } catch (err) {
-      toast.error(err.response?.data?.message || "❌ Registration failed");
+      toast.error(
+        err.response?.data?.message || "❌ Registration failed"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  /* =======================
+     UI
+  ======================= */
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
       <Card sx={{ p: 2 }}>
         <CardContent>
-          <Typography variant="h4" textAlign="center" mb={3} color="primary">
-            📝 Create Account
+          <Typography
+            variant="h4"
+            textAlign="center"
+            mb={3}
+            color="primary"
+          >
+            Create Account
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit}>
@@ -120,7 +170,9 @@ const Register = () => {
               fullWidth
               margin="normal"
               value={form.name}
-              onChange={(e) => handleChange("name", e.target.value)}
+              onChange={(e) =>
+                handleChange("name", e.target.value.trimStart())
+              }
               error={!!errors.name}
               helperText={errors.name}
             />
@@ -131,7 +183,9 @@ const Register = () => {
               fullWidth
               margin="normal"
               value={form.email}
-              onChange={(e) => handleChange("email", e.target.value)}
+              onChange={(e) =>
+                handleChange("email", e.target.value.trim())
+              }
               error={!!errors.email}
               helperText={errors.email}
             />
@@ -142,9 +196,14 @@ const Register = () => {
               fullWidth
               margin="normal"
               value={form.password}
-              onChange={(e) => handleChange("password", e.target.value)}
+              onChange={(e) =>
+                handleChange("password", e.target.value)
+              }
               error={!!errors.password}
-              helperText={errors.password || "Min 6 chars, uppercase, number, special"}
+              helperText={
+                errors.password ||
+                "Min 6 chars with uppercase, number, symbol"
+              }
             />
 
             <TextField
@@ -153,7 +212,9 @@ const Register = () => {
               fullWidth
               margin="normal"
               value={form.phone}
-              onChange={(e) => handleChange("phone", e.target.value)}
+              onChange={(e) =>
+                handleChange("phone", e.target.value)
+              }
               error={!!errors.phone}
               helperText={errors.phone || "10-digit phone number"}
             />
@@ -162,11 +223,10 @@ const Register = () => {
               type="submit"
               fullWidth
               variant="contained"
-              color="primary"
               sx={{ mt: 2, py: 1.3 }}
-              disabled={loading}
+              disabled={loading || !validateForm()}
             >
-              {loading ? "Registering..." : "Register"}
+              {loading ? "Creating Account..." : "Register"}
             </Button>
 
             <Typography textAlign="center" mt={2}>
@@ -176,7 +236,6 @@ const Register = () => {
             <Button
               fullWidth
               variant="outlined"
-              color="secondary"
               sx={{ mt: 1 }}
               component={Link}
               to="/login"

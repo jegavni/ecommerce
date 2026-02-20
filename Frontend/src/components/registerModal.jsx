@@ -10,7 +10,8 @@ import {
 import CloseIcon from "@mui/icons-material/Close";
 import axios from "axios";
 import { toast } from "react-toastify";
-import { useUser } from "../context/userContext";
+import { useDispatch } from "react-redux";
+import { loginUser } from "../Redux/slices/userSlice";
 
 const style = {
   position: "absolute",
@@ -25,16 +26,22 @@ const style = {
 };
 
 const RegisterModal = ({ open, onClose }) => {
-  const { login } = useUser();
+  const dispatch = useDispatch();
+
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
+    phone: "",
   });
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -42,13 +49,32 @@ const RegisterModal = ({ open, onClose }) => {
     setLoading(true);
 
     try {
-      const res = await axios.post("http://localhost:5000/api/users/register", form);
+      // ✅ Register user
+      await axios.post(
+        "http://localhost:5000/api/auth/register",
+        form,
+        { withCredentials: true }
+      );
 
-      toast.success("🎉 Registration successful!");
-      login(res.data.user); // log in user after registration
-      onClose();
+      // ✅ Auto login
+      const result = await dispatch(
+        loginUser({
+          email: form.email,
+          password: form.password,
+        })
+      );
+
+      if (loginUser.fulfilled.match(result)) {
+        toast.success("🎉 Account created & logged in!");
+        onClose();
+      } else {
+        toast.info("Registered successfully. Please login.");
+      }
+
     } catch (err) {
-      toast.error(err.response?.data?.message || "❌ Registration failed");
+      toast.error(
+        err.response?.data?.message || "❌ Registration failed"
+      );
     } finally {
       setLoading(false);
     }
@@ -57,14 +83,22 @@ const RegisterModal = ({ open, onClose }) => {
   return (
     <Modal open={open} onClose={onClose}>
       <Box sx={style}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
-          <Typography variant="h6">Register</Typography>
-          <IconButton onClick={onClose}><CloseIcon /></IconButton>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            mb: 2,
+          }}
+        >
+          <Typography variant="h6">Create Account</Typography>
+          <IconButton onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
         </Box>
 
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Name"
+            label="Full Name"
             name="name"
             fullWidth
             value={form.name}
@@ -72,6 +106,7 @@ const RegisterModal = ({ open, onClose }) => {
             sx={{ mb: 2 }}
             required
           />
+
           <TextField
             label="Email"
             name="email"
@@ -82,6 +117,7 @@ const RegisterModal = ({ open, onClose }) => {
             sx={{ mb: 2 }}
             required
           />
+
           <TextField
             label="Password"
             name="password"
@@ -89,17 +125,27 @@ const RegisterModal = ({ open, onClose }) => {
             fullWidth
             value={form.password}
             onChange={handleChange}
+            sx={{ mb: 2 }}
+            required
+          />
+
+          <TextField
+            label="Phone"
+            name="phone"
+            fullWidth
+            value={form.phone}
+            onChange={handleChange}
             sx={{ mb: 3 }}
             required
           />
+
           <Button
             type="submit"
             variant="contained"
-            color="primary"
             fullWidth
             disabled={loading}
           >
-            {loading ? "Registering..." : "Register"}
+            {loading ? "Creating Account..." : "Register"}
           </Button>
         </form>
       </Box>

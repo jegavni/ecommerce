@@ -40,6 +40,8 @@ const Cart = () => {
   const [loadingAddresses, setLoadingAddresses] = useState(false);
   const [openAddressModal, setOpenAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
+const [paymentMethod, setPaymentMethod] = useState("ONLINE"); 
+// ONLINE or COD
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
@@ -157,6 +159,18 @@ const Cart = () => {
           toast.success("🎉 Payment Successful & Order Placed!");
           dispatch(clearCart());
         },
+// modal: {
+//         ondismiss: function () {
+//           toast.error("❌ Payment cancelled");
+//           // optional ideas:
+//           // setPaymentMethod("COD");
+//           // openRetryDialog(true);
+//         },
+//         escape: true,
+//         backdropclose: true,
+//         handleback: true,
+//         confirm_close: true,
+//       },
 
         prefill: {
           name: user.name,
@@ -169,11 +183,58 @@ const Cart = () => {
       };
 
       const rzp = new window.Razorpay(options);
-      rzp.open();
+
+// fires when popup is closed by X, ESC, backdrop, back button
+rzp.on("modal.closed", async function () {
+  try {
+    await saveOrder({
+      paymentMethod: "COD",
+      paymentStatus: "PENDING",
+    });
+
+    toast.success("🧾 Order placed with Cash on Delivery");
+  } catch (err) {
+    toast.error("❌ Failed to place COD order");
+  }
+});
+
+// optional but recommended
+rzp.on("payment.failed", function () {
+  toast.error("❌ Payment failed");
+});
+
+rzp.open();
+
     } catch (err) {
       toast.error("❌ Payment Failed");
     }
   };
+
+  const placeCODOrder = async () => {
+  if (!user) return toast.error("❌ Please login");
+  if (!selectedAddress) return toast.error("❌ Please select a delivery address");
+
+  try {
+    await axios.post("http://localhost:5000/api/orders", {
+      userId: user._id,
+      items: cart.map((item) => ({
+        productId: item._id,
+        title: item.title,
+        price: Number(item.price),
+        qty: Number(item.qty),
+      })),
+      address: selectedAddress,
+      totalAmount,
+      paymentMethod: "COD",
+      paymentStatus: "PENDING",
+    });
+
+    toast.success("🎉 Order placed with Cash on Delivery!");
+    dispatch(clearCart());
+  } catch (err) {
+    toast.error("❌ Failed to place order");
+  }
+};
 
 
   /* =======================
@@ -282,17 +343,44 @@ const Cart = () => {
       >
         Total: ₹{totalAmount}
       </Typography>
+<Box mt={3}>
+  <Typography variant="h6">Payment Method</Typography>
+
+  <Box display="flex" gap={2} mt={1}>
+    <Button
+      variant={paymentMethod === "ONLINE" ? "contained" : "outlined"}
+      onClick={() => setPaymentMethod("ONLINE")}
+    >
+      Pay Online
+    </Button>
+
+    <Button
+      variant={paymentMethod === "COD" ? "contained" : "outlined"}
+      onClick={() => setPaymentMethod("COD")}
+    >
+      Cash on Delivery
+    </Button>
+  </Box>
+</Box>
+
 
       {/* PLACE ORDER */}
-      <Button
-        variant="contained"
-        color="success"
-        fullWidth
-        sx={{ mt: 3, py: 1.5 }}
-        onClick={makePayment}
-      >
-        Pay Now
-      </Button>
+  <Button
+  variant="contained"
+  color="success"
+  fullWidth
+  sx={{ mt: 3, py: 1.5 }}
+  onClick={() => {
+    if (paymentMethod === "ONLINE") {
+      makePayment();
+    } else {
+      placeCODOrder();
+    }
+  }}
+>
+  {paymentMethod === "ONLINE" ? "Pay Now" : "Place Order (COD)"}
+</Button>
+    
 
       {/* ADDRESS MODAL */}
       <AddAddressModal

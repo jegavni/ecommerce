@@ -4,69 +4,46 @@ import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
-import { Button } from "@/components/ui/button.tsx";
-import { Input } from "@/components/ui/input.tsx";
+import Header from "../components/Header";
+import { HomeSection } from "../components/homeSection.jsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 
-import { Home, User, Wallet, ShoppingCart, Bot } from "lucide-react";
-import ProductReviewCard from "../components/productReviewCard";
-
 import { addToCart } from "../Redux/slices/cartSlice";
-import { logout as logoutUser } from "../Redux/slices/userSlice";
+import { Rating } from "@mui/material";
 
-const HomePage = () => {
+const HomePage = ({ products = [] }) => {
   const [activeSection, setActiveSection] = useState("home");
-  const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState("");
-  const [showHeader, setShowHeader] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
   const [pendingProducts, setPendingProducts] = useState([]);
+  const [recentlyViewed, setRecentlyViewed] = useState([]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { items: cart } = useSelector((state) => state.cart);
   const { user, token } = useSelector((state) => state.user);
-  const fetchPendingProducts = () => {
-    axios
-      .get("http://localhost:5000/api/admin/products/pending", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      })
-      .then((res) => setPendingProducts(res.data))
-      .catch(console.error);
-  };
 
-  // Fetch products
+  /* ===== FETCH RECENTLY VIEWED ===== */
   useEffect(() => {
-    axios.get("http://localhost:5000/api/products").then((res) => {
-      setProducts(res.data.products || []);
-    });
+    fetch("http://localhost:5000/api/recentlyViewed", {
+      credentials: "include"
+    })
+      .then(res => res.json())
+      .then(setRecentlyViewed)
+      .catch(console.error);
   }, []);
 
+  /* ===== FETCH ADMIN PENDING PRODUCTS ===== */
   useEffect(() => {
-    if (activeSection === "you" && user?.role === "admin") {
-      fetchPendingProducts();
+    if (activeSection === "pending" && user?.role === "admin") {
+      axios
+        .get("http://localhost:5000/api/admin/products/pending", {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        .then(res => setPendingProducts(res.data))
+        .catch(console.error);
     }
-  }, [activeSection, user]);
+  }, [activeSection, user, token]);
 
-
-
-  // Hide header on scroll down
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > lastScrollY) {
-        setShowHeader(false);
-      } else {
-        setShowHeader(true);
-      }
-      setLastScrollY(window.scrollY);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
-
+  /* ===== ADD TO CART ===== */
   const handleAddToCart = (product) => {
     if (!user) {
       toast.info("Please login first");
@@ -77,204 +54,171 @@ const HomePage = () => {
     toast.success("Added to cart");
   };
 
-  const filteredProducts = products.filter((p) =>
-    p.title.toLowerCase().includes(search.toLowerCase())
-  );
-
   return (
     <div className="pb-20">
-      {/* TOP SEARCH BAR */}
-      <div
-        className={`bg-[#131921] p-2 sticky top-0 z-50 transition-transform duration-300 ${showHeader ? "translate-y-0" : "-translate-y-full"
-          }`}
-      >
-        <Input
-          placeholder="Search products or help"
-          className="bg-white w-full"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
 
-      {/* PRODUCTS */}
+      {/* HEADER CONTROLS SECTION */}
+      <Header
+        products={products}
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+      />
+
+      {/* ================= HOME SECTION ================= */}
       {activeSection === "home" && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
-          {filteredProducts.map((product) => {
-            const isSellerOwner =
-              user?.role === "seller" &&
-              (product.seller === user?._id ||
-                product.seller?._id === user?._id);
-            console.log("img url 👉", product.images?.[0]);
+        <>
+          {/* CATEGORY CARDS */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
+            <HomeSection
+              title="Pick up where you left off"
+              products={recentlyViewed}
+            />
+            <HomeSection title="Keep shopping for" />
+            <HomeSection title="Buy again" />
+            <HomeSection
+              title="Deals & Offers"
+              products={recentlyViewed}
+            />
+          </div>
 
-            return (
-              <Card
-                key={product._id}
-                className="rounded-xl cursor-pointer hover:shadow-lg transition"
-                onClick={() => navigate(`/product/${product._id}`)}
+          {/* HERO BANNER */}
+          <div className="bg-yellow-300 p-4">
+            <div className="bg-white rounded-xl p-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold">Get set & fly to Dubai</h2>
+                <p className="text-sm text-gray-600">Starting ₹7,599</p>
+              </div>
+              <img
+                src="/banner-plane.png"
+                className="h-20 object-contain"
+                alt="banner"
+              />
+            </div>
+          </div>
 
-              >
+          {/* PRODUCTS GRID */}
+          <div className="w-full px-4 py-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              {products.map((product, index) => {
+                const discount = product.mrp
+                  ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
+                  : 0;
 
-                <img
-                  src={product.images?.[0]?.url || "/placeholder.png"}
-                  className="h-40 w-full object-contain p-2"
-                  alt={product.title}
-                />
-
-
-                <CardContent className="space-y-1">
-                  <p className="font-semibold truncate">{product.title}</p>
-                  <p className="text-green-600 font-bold">₹{product.price}</p>
-
-                  {/* ADD TO CART */}
-                  <Button
-                    className="w-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddToCart(product);
-                    }}
+                return (
+                  <Card
+                    key={product._id}
+                    className="relative rounded-xl cursor-pointer hover:shadow-lg transition bg-white"
+                    onClick={() => navigate(`/product/${product._id}`)}
                   >
-                    Add to Cart
-                  </Button>
+                    {index < 3 && (
+                      <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs px-2 py-1 rounded">
+                        #{index + 1} Best Seller
+                      </div>
+                    )}
 
-                  {/* ✅ EDIT BUTTON – ONLY FOR SELLER & OWNER */}
-                  {isSellerOwner && (
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/seller/product/edit/${product._id}`);
-                      }}
-                    >
-                      Edit Product
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            );
-          })}
+                    {/* 👇 Edit button for seller */}
+                    {user?.role === "seller" && (
+                      <button
+                        className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/seller/product/edit/${product._id}`);
+                        }}
+                      >
+                        Edit
+                      </button>
+                    )}
 
-        </div>
-      )}
+                    <img
+                      src={product.images?.[0]?.url || "/placeholder.png"}
+                      className="h-44 w-full object-contain p-3"
+                      alt={product.title}
+                    />
 
-      {activeSection === "you" && (
-        <div className="p-4 space-y-4">
-          <Card className="rounded-xl">
-            <CardContent className="space-y-3">
-              <h2 className="text-lg font-bold">Your Account</h2>
+                    <CardContent className="space-y-2">
+                      <p className="font-semibold line-clamp-2 min-h-[40px]">
+                        {product.title}
+                      </p>
 
-              {user ? (
-                <>
-                  <p><strong>Name:</strong> {user.name}</p>
-                  <p><strong>Email:</strong> {user.email}</p>
-                  <p><strong>Role:</strong> {user.role}</p>
+                      <div className="flex items-center gap-2">
+                        <Rating
+                          value={product.rating || 0}
+                          precision={0.5}
+                          readOnly
+                          size="small"
+                        />
+                        <span className="text-xs text-gray-500">
+                          {product.numReviews || 0}
+                        </span>
+                      </div>
 
-                  {/* SELLER / CUSTOMER */}
-                  {user.role === "seller" ? (
-                    <Button className="w-full" onClick={() => navigate("/addproduct")}>
-                      Add Products
-                    </Button>
-                  ) : user.role !== "admin" ? (
-                    <Button
-                      className="w-full"
-                      variant="outline"
-                      onClick={() => navigate("/become-seller")}
-                    >
-                      Become a Seller
-                    </Button>
-                  ) : null}
+                      <div className="flex items-center gap-2">
+                        <span className="text-red-600 font-bold text-lg">
+                          ₹{product.price}
+                        </span>
 
-                  {/* ADMIN: PENDING APPROVALS */}
-                  {user.role === "admin" && (
-                    <div className="space-y-3 pt-4">
-                      <h3 className="font-semibold text-orange-600">
-                        Pending Approvals
-                      </h3>
+                        {product.mrp && (
+                          <span className="text-gray-500 line-through text-sm">
+                            ₹{product.mrp}
+                          </span>
+                        )}
+                      </div>
 
-                      {pendingProducts.length === 0 ? (
-                        <p className="text-sm text-gray-500">
-                          No pending products 🎉
+                      {product.mrp && (
+                        <p className="text-green-600 text-sm font-medium">
+                          Save {discount}%
                         </p>
-                      ) : (
-                        pendingProducts.map((product) => (
-                          <ProductReviewCard
-                            key={product._id}
-                            product={product}
-                            onAction={fetchPendingProducts}
-                          />
-                        ))
                       )}
-                    </div>
-                  )}
 
-                  {/* ORDERS */}
-                  <Button
-                    className="w-full"
-                    variant="secondary"
-                    onClick={() => navigate("/orders")}
-                  >
-                    Recent Orders
-                  </Button>
+                      <button
+                        className="bg-yellow-400 hover:bg-yellow-500 px-3 py-2 rounded w-full font-medium"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(product);
+                        }}
+                      >
+                        Add to Cart
+                      </button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
+        </>
+      )}
 
-                  {/* LOGOUT */}
-                  <Button
-                    variant="destructive"
-                    className="w-full"
-                    onClick={() => {
-                      dispatch(logoutUser());
-                      navigate("/login");
-                    }}
-                  >
-                    Logout
-                  </Button>
-                </>
-              ) : (
-                <Button className="w-full" onClick={() => navigate("/login")}>
-                  Login
-                </Button>
-              )}
-            </CardContent>
-          </Card>
+      {/* ================= ADMIN SECTION ================= */}
+      {activeSection === "pending" && user?.role === "admin" && (
+        <div className="p-4">
+          <h2 className="text-xl font-bold mb-4">Pending Product Approvals</h2>
+
+          {pendingProducts.length === 0 ? (
+            <p>No pending products</p>
+          ) : (
+            pendingProducts.map(product => (
+              <div key={product._id} className="border p-3 rounded mb-2">
+                {product.title}
+              </div>
+            ))
+          )}
         </div>
       )}
 
+      {/* ================= SELLER SECTION ================= */}
+      {activeSection === "products" && user?.role === "seller" && (
+        <div className="p-4">
+          <h2 className="text-xl font-bold">Seller Products</h2>
+        </div>
+      )}
 
-
-      {/* BOTTOM NAV */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2">
-        <NavItem
-          icon={<Home />}
-          label="Home"
-          active={activeSection === "home"}
-          onClick={() => setActiveSection("home")}
-        />
-        <NavItem
-          icon={<User />}
-          label="You"
-          active={activeSection === "you"}
-          onClick={() => setActiveSection("you")}
-        />
-        <NavItem icon={<Wallet />} label="Wallet" onClick={() => navigate("/wallet")} />
-        <NavItem
-          icon={<ShoppingCart />}
-          label={`Cart (${cart.length})`}
-          onClick={() => navigate("/cart")}
-        />
-        <NavItem icon={<Bot />} label="Rufus" />
-      </div>
+      {activeSection === "orders" && (
+        <div className="p-4">
+          <h2 className="text-xl font-bold">Orders</h2>
+        </div>
+      )}
     </div>
   );
 };
-
-const NavItem = ({ icon, label, onClick, active }) => (
-  <button
-    onClick={onClick}
-    className={`flex flex-col items-center text-xs ${active ? "text-orange-500" : "text-gray-600"
-      }`}
-  >
-    {icon}
-    <span>{label}</span>
-  </button>
-);
 
 export default HomePage;

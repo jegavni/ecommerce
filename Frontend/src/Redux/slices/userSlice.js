@@ -21,6 +21,21 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+export const getCurrentUser = createAsyncThunk(
+  "user/getCurrentUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:5000/api/auth/me",
+        { withCredentials: true }
+      );
+      return data; // { user }
+    } catch (err) {
+      return rejectWithValue(null);
+    }
+  }
+);
+
 
 /* =======================
    USER SLICE
@@ -61,7 +76,14 @@ const userSlice = createSlice({
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
+      })
+      .addCase(getCurrentUser.fulfilled, (state, action) => {
+      state.user = action.payload.user;
+    })
+
+    .addCase(getCurrentUser.rejected, (state) => {
+      state.user = null;
+    });
   },
 });
 
