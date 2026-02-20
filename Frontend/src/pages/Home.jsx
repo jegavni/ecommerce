@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
 import Header from "../components/Header";
-import { HomeSection } from "../components/homeSection.jsx";
+import { HomeSection } from "../components/HomeSection.jsx";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 
 import { addToCart } from "../Redux/slices/cartSlice";
