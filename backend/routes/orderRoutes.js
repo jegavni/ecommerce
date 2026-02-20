@@ -1,6 +1,7 @@
 import express from "express";
 import User from "../models/user.js";
 import Order from "../models/order.js";
+import Product from "../models/product.js";
 
 const router = express.Router();
 
@@ -22,7 +23,6 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "No address found" });
     }
 
-    // 🔥 EXPLICIT ADDRESS SNAPSHOT
     const deliveryAddress = {
       name: address.name,
       phone: address.phone,
@@ -33,6 +33,7 @@ router.post("/", async (req, res) => {
       isDefault: address.isDefault,
     };
 
+    // 🔥 CREATE ORDER
     const order = new Order({
       user: userDoc._id,
       items,
@@ -44,6 +45,27 @@ router.post("/", async (req, res) => {
 
     await order.save();
 
+    // 🔥 UPDATE PRODUCT STOCK
+for (let item of items) {
+  const product = await Product.findById(item.productId);
+  if (!product) continue;
+
+  const productStock = Number(product.stock) || 0;
+  const orderQuantity = Number(item.qty) || 0; // ⚠ use qty
+
+  if (productStock < orderQuantity) {
+    return res.status(400).json({
+      message: `Insufficient stock for ${product.title}`,
+    });
+  }
+
+  product.stock = productStock - orderQuantity;
+  await product.save();
+  console.log(`Stock updated for ${product.title}: ${product.stock}`);
+}
+
+
+
     res.status(201).json({
       message: "Order placed successfully",
       order,
@@ -52,7 +74,9 @@ router.post("/", async (req, res) => {
     console.error("ORDER ERROR:", err);
     res.status(500).json({ message: err.message });
   }
+  
 });
+
 
 
 /* ✅ GET ORDERS BY USER */

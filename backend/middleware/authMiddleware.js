@@ -4,15 +4,26 @@ import User from "../models/user.js";
 /* =========================
    PROTECT (Any Logged-in User)
 ========================= */
+
+
 export const protect = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    let token = null;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    // 1️⃣ Check Authorization header
+    if (req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
+    }
+
+    // 2️⃣ Check cookie (THIS FIXES REFRESH LOGIN)
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
-    const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select("-password");
@@ -27,6 +38,7 @@ export const protect = async (req, res, next) => {
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
+
 
 /* =========================
    PROTECT SELLER (Seller Only)

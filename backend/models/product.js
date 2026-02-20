@@ -1,18 +1,25 @@
 import mongoose from "mongoose";
 
+const reviewSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    name: { type: String, required: true },
+    rating: { type: Number, required: true, min: 1, max: 5 },
+    comment: { type: String, trim: true },
+  },
+  { timestamps: true }
+);
+
 const productSchema = new mongoose.Schema(
   {
     /* ================= BASIC INFO ================= */
-    title: {
-      type: String,
-      required: true,
-      trim: true,
-    },
+    title: { type: String, required: true, trim: true },
 
-    brand: {
-      type: String,
-      trim: true,
-    },
+    brand: { type: String, trim: true },
 
     category: {
       type: String,
@@ -22,14 +29,8 @@ const productSchema = new mongoose.Schema(
     },
 
     /* ================= PRICING ================= */
-    price: {
-      type: Number,
-      required: true,
-    },
-
-    mrp: {
-      type: Number,
-    },
+    price: { type: Number, required: true },
+    mrp: Number,
 
     stock: {
       type: Number,
@@ -57,34 +58,29 @@ const productSchema = new mongoose.Schema(
     },
 
     images: [
-  {
-    url: {
-      type: String,
-      required: true,
-    },
-    publicId: {
-      type: String,
-      required: true,
-    },
-  },
-],
+      {
+        url: { type: String, required: true },
+        publicId: { type: String, required: true },
+      },
+    ],
 
+    /* ================= RATING SYSTEM ================= */
+    reviews: [reviewSchema],
+
+    rating: {
+      type: Number,
+      default: 0, // average rating
+    },
+
+    numReviews: {
+      type: Number,
+      default: 0,
+    },
 
     /* ================= SHIPPING & POLICY ================= */
-    codAvailable: {
-      type: Boolean,
-      default: true,
-    },
-
-    warranty: {
-      type: String,
-      default: "No Warranty",
-    },
-
-    returnPolicy: {
-      type: String,
-      default: "7 Days",
-    },
+    codAvailable: { type: Boolean, default: true },
+    warranty: { type: String, default: "No Warranty" },
+    returnPolicy: { type: String, default: "7 Days" },
 
     /* ================= SELLER ================= */
     seller: {
@@ -105,9 +101,7 @@ const productSchema = new mongoose.Schema(
       ref: "User",
     },
 
-    approvedAt: {
-      type: Date,
-    },
+    approvedAt: Date,
   },
   { timestamps: true }
 );

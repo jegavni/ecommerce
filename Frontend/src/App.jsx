@@ -22,7 +22,7 @@ import AddProduct from "./components/AddProduct.jsx";
 import SellerForm from "./pages/sellerForm";
 import AdminProduct from "./pages/AdminProduct";
 import ProtectedRoute from "./components/protectedRoute";
-import PayPage from "./pages/Pay";
+import PayPage from "./pages/pay";
 import SellerDashboard from "./pages/sellerDashboard";
 import Search from "./pages/search.jsx";  
 import RecentlyViewedPage from "./pages/recentlViewed.jsx";

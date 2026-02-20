@@ -31,13 +31,16 @@ const orderSchema = new mongoose.Schema(
 
     paymentMethod: {
       type: String,
-      default: "COD",
+      enum: ["Razorpay", "COD"],
     },
 
     paymentStatus: {
       type: String,
-      default: "PENDING",
-    },
+      enum: ["PAID", "PENDING"],
+    }
+
+
+
   },
   { timestamps: true }
 );

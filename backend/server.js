@@ -16,6 +16,7 @@ import adminProductRoutes from "./routes/adminProductRoutes.js";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
 import User from "./models/user.js";
+import recentlyViewedRoutes from "./routes/recentlyViewedRoutes.js";
 
 
 
@@ -48,7 +49,7 @@ app.use("/api/users",addressRoutes);
 app.use("/api/seller",sellerRoutes);
 app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/payment", paymentRoutes);
-
+app.use("/api/recentlyViewed", recentlyViewedRoutes);
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
