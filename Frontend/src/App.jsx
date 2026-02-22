@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import API from "./api/axios";
 import { useDispatch } from "react-redux";
 import { useEffect, useState } from "react";
 import { setUser } from "./Redux/slices/userSlice.js";
@@ -38,7 +39,6 @@ function App() {
     const checkAuth = async () => {
       try {
         const res = await axios.get(
-          "http://localhost:5000/api/auth/me",
           { withCredentials: true }
         );
         dispatch(setUser(res.data.user));
@@ -53,11 +53,11 @@ function App() {
   }, [dispatch]);
 
   // ===== FETCH PRODUCTS ONCE =====
-  useEffect(() => {
-    axios.get("http://localhost:5000/api/products").then((res) => {
-      setProducts(res.data.products || []);
-    });
-  }, []);
+ useEffect(() => {
+  API.get("/api/products").then((res) => {
+    setProducts(res.data.products || []);
+  });
+}, []);
 
   if (!authChecked) return null;
 
