@@ -9,7 +9,7 @@ export const loginUser = createAsyncThunk(
   async (credentials, { rejectWithValue }) => {
     try {
       const { data } = await axios.post(
-        "http://localhost:5000/api/auth/login",
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
         credentials,
         { withCredentials: true }
       );
@@ -26,7 +26,7 @@ export const getCurrentUser = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const { data } = await axios.get(
-        "http://localhost:5000/api/auth/me",
+        `${import.meta.env.VITE_API_URL}/api/auth/me`,
         { withCredentials: true }
       );
       return data; // { user }
