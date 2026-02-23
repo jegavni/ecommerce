@@ -29,7 +29,7 @@ const SellerForm = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/seller/becomeseller",
+        `${import.meta.env.VITE_API_URL}/api/seller/becomeseller`,
         form,
         { withCredentials: true }
       );

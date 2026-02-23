@@ -16,7 +16,7 @@ const ProductList = () => {
 
   const fetchProducts = async () => {
     const { data } = await axios.get(
-      `http://localhost:5000/api/products?keyword=${keyword}&page=${page}`
+      `${import.meta.env.VITE_API_URL}/api/products?keyword=${keyword}&page=${page}`
     );
 
     setProducts(data.products);

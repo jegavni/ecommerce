@@ -18,7 +18,7 @@ const SellerDashboard = () => {
 const fetchMyProducts = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:5000/api/products/my",
+          `${import.meta.env.VITE_API_URL}/api/products/my`,
           { withCredentials: true } // send cookies automatically
         );
         setProducts(data);
