@@ -26,7 +26,7 @@ const AdminProducts = () => {
     const fetchPending = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:5000/api/admin/products/pending",
+          "http://`${import.meta.env.vite_api_url}`/api/admin/products/pending",
           {
             headers: { Authorization: `Bearer ${token}` },
           }

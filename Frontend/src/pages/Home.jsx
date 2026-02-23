@@ -23,7 +23,7 @@ const HomePage = ({ products = [] }) => {
 
   /* ===== FETCH RECENTLY VIEWED ===== */
   useEffect(() => {
-    fetch("http://localhost:5000/api/recentlyViewed", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
       credentials: "include"
     })
       .then(res => res.json())
@@ -35,7 +35,7 @@ const HomePage = ({ products = [] }) => {
   useEffect(() => {
     if (activeSection === "pending" && user?.role === "admin") {
       axios
-        .get("http://localhost:5000/api/admin/products/pending", {
+        .get(`${import.meta.env.VITE_API_URL}/api/admin/products/pending`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         .then(res => setPendingProducts(res.data))

@@ -59,7 +59,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
         setLoadingAddresses(true);
 
         const res = await axios.get(
-          `http://localhost:5000/api/users/${user._id}/addresses`
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`
         );
 
         const addressList = res.data.addresses || res.data || [];
@@ -93,7 +93,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
     try {
       if (editingAddress) {
         const res = await axios.put(
-          `http://localhost:5000/api/users/${user._id}/addresses/${editingAddress._id}`,
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses/${editingAddress._id}`,
           addressData
         );
 
@@ -101,7 +101,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
         toast.success("✅ Address updated");
       } else {
         const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`,
+          `pr/api/users/${user._id}/addresses`,
           addressData
         );
 
@@ -128,7 +128,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
     try {
       // 1️⃣ Create Razorpay Order from backend
       const { data } = await axios.post(
-        "http://localhost:5000/api/payment/create-order",
+        "http://`${import.meta.env.vite_api_url}`/api/payment/create-order",
         { amount: totalAmount }
       );
 
@@ -141,7 +141,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
         handler: async function (response) {
           // 2️⃣ After Successful Payment → Save Order in DB
-          await axios.post("http://localhost:5000/api/orders", {
+          await axios.post("http://`${import.meta.env.vite_api_url}`/api/orders", {
             userId: user._id,
             items: cart.map((item) => ({
               productId: item._id,
@@ -215,7 +215,7 @@ rzp.open();
   if (!selectedAddress) return toast.error("❌ Please select a delivery address");
 
   try {
-    await axios.post("http://localhost:5000/api/orders", {
+    await axios.post("http://`${import.meta.env.vite_api_url}`/api/orders", {
       userId: user._id,
       items: cart.map((item) => ({
         productId: item._id,
