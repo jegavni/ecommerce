@@ -101,7 +101,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
         toast.success("✅ Address updated");
       } else {
         const res = await axios.post(
-          `http://localhost:5000/api/users/${user._id}/addresses`,
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`,
           addressData
         );
 

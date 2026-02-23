@@ -6,7 +6,7 @@ const RecentlyViewedPage = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/recentlyViewed", {
+    fetch(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
       credentials: "include",
     })
       .then(res => res.json())
