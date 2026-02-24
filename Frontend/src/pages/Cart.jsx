@@ -101,7 +101,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
         toast.success("✅ Address updated");
       } else {
         const res = await axios.post(
-          `pr/api/users/${user._id}/addresses`,
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`,
           addressData
         );
 
@@ -128,7 +128,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
     try {
       // 1️⃣ Create Razorpay Order from backend
       const { data } = await axios.post(
-        "http://`${import.meta.env.vite_api_url}`/api/payment/create-order",
+        `${import.meta.env.VITE_API_URL}/api/payment/create-order`,
         { amount: totalAmount }
       );
 
