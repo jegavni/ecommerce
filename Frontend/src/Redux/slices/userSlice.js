@@ -84,6 +84,7 @@ const userSlice = createSlice({
     })
 
     .addCase(getCurrentUser.rejected, (state) => {
+      state.loading = false;
       state.user = null;
     })
     .addCase(getCurrentUser.pending, (state) => {
