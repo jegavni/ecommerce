@@ -96,7 +96,7 @@ const Login = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 2, py: 1.3 }}
-              disabled={loading}
+              disabled={logiLoading}
             >
               {loading ? "Logging in..." : "Login"}
             </Button>

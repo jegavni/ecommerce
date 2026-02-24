@@ -63,8 +63,8 @@ export const login = async (req, res) => {
     // ✅ SET COOKIE (THIS WAS MISSING)
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,        // MUST be false on localhost
-      sameSite: "lax",
+      secure: true,        // MUST be false on localhost
+      sameSite: "none",
       path: "/",
       maxAge: 60*24 * 60 * 1000,
     });
