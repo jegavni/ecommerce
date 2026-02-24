@@ -32,7 +32,7 @@ const PayPage = () => {
 
     try {
       const res = await axios.post(
-        "http://localhost:5000/api/wallet/pay",
+        `${import.meta.env.VITE_API_URL}/api/wallet/pay`,
         { amount: Number(amount) },
         {
           headers: {

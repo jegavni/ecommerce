@@ -84,14 +84,14 @@ const removeExistingImage = (index) => {
   try {
     if (isEditMode) {
       await axios.put(
-        `http://localhost:5000/api/seller/product/${id}`,
+        `${import.meta.env.VITE_API_URL}/api/seller/product/${id}`,
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       toast.success("Product updated successfully ✅");
     } else {
       await axios.post(
-        "http://localhost:5000/api/products/createProduct",
+        `${import.meta.env.VITE_API_URL}/api/products/createProduct`,
         formData,
         { withCredentials: true }
       );
@@ -112,7 +112,7 @@ const removeExistingImage = (index) => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/products/${id}`
+          `${import.meta.env.VITE_API_URL}/api/products/${id}`
         );
         console.log("Fetched product for edit 👉", res.data);
         const p = res.data?.product || res.data || {};

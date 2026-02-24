@@ -15,7 +15,7 @@ const ProductReviewCard = ({ product, onAction }) => {
 
   const handleReject = async () => {
     await axios.put(
-      `http://localhost:5000/api/admin/products/${product._id}/reject`,
+      `${import.meta.env.VITE_API_URL}/api/admin/products/${product._id}/reject`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );

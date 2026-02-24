@@ -25,7 +25,7 @@ const Products = ({ products, addToCart }) => {
               {/* IMAGE */}
               <div className="h-40 flex items-center justify-center mb-3">
                 <img
-                  src={`http://localhost:5000/${product.image}`}
+                  src={`${import.meta.env.VITE_API_URL}/${product.image}`}
                   alt={product.title}
                   className="max-h-full object-contain"
                 />

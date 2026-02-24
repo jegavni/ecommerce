@@ -50,7 +50,7 @@ useEffect(() => {
   if (!product?._id) return;
 
   axios.post(
-    "http://localhost:5000/api/recentlyViewed",
+    `${import.meta.env.VITE_API_URL}/api/recentlyViewed`,
     { productId: product._id },
     { withCredentials: true } // 🔥 sends cookie token
   ).catch(() => {});
@@ -62,7 +62,7 @@ useEffect(() => {
     if (!product?.category) return;
 
     axios
-      .get(`http://localhost:5000/api/products?category=${product.category}`)
+      .get(`${import.meta.env.VITE_API_URL}/api/products?category=${product.category}`)
       .then((res) => {
         const list = res.data.products || [];
         setSimilarProducts(
