@@ -21,7 +21,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { user, loading, error } = useSelector((state) => state.user);
+  const { user, loginLoading, error } = useSelector((state) => state.user);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -96,7 +96,7 @@ const Login = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 2, py: 1.3 }}
-              disabled={logiLoading}
+              disabled={loginLoading}
             >
               {loading ? "Logging in..." : "Login"}
             </Button>
