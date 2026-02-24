@@ -78,11 +78,16 @@ const userSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
-      state.user = action.payload.user;
+     
+        state.loading = false;
+        state.user = action.payload.user || null;
     })
 
     .addCase(getCurrentUser.rejected, (state) => {
       state.user = null;
+    })
+    .addCase(getCurrentUser.pending, (state) => {
+      state.loading = true;
     });
   },
 });
