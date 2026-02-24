@@ -21,7 +21,7 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { user, loginLoading, error } = useSelector((state) => state.user);
+  const { user, loginLoading, error } = useSelector((state) => state.user || {});
 
   const handleSubmit = (e) => {
     e.preventDefault();
