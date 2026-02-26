@@ -15,7 +15,6 @@ import addressRoutes from "./routes/address.routes.js";
 import adminProductRoutes from "./routes/adminProductRoutes.js";
 import cookieParser from "cookie-parser";
 import fileUpload from "express-fileupload";
-import User from "./models/user.js";
 import recentlyViewedRoutes from "./routes/recentlyViewedRoutes.js";
 
 
@@ -66,8 +65,14 @@ app.get("/cookie-test", (req, res) => {
 });
 
 
+
+const MONGO_URI =
+  process.env.NODE_ENV === "production"
+    ? process.env.MONGO_URI_PROD
+    : process.env.MONGO_URI_DEV;
+
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(MONGO_URI)
   .then(() => console.log("MongoDB Connected"))
   .catch(err => console.log(err));
 

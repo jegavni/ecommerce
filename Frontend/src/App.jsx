@@ -10,13 +10,12 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-import Header from "./components/Header";
 import Home from "./pages/Home";
 import Orders from "./pages/Orders";
 import Login from "./pages/Login";
 import Register from "./pages/register";
-import ForgotPassword from "./pages/forgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 import Cart from "./pages/Cart";
 import ProductDetails from "./pages/productDetails.jsx";
 import AddProduct from "./components/AddProduct.jsx";
@@ -36,21 +35,22 @@ function App() {
 
   // ===== CHECK AUTH =====
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get(
-          { withCredentials: true }
-        );
-        dispatch(setUser(res.data.user));
-      } catch {
-        dispatch(setUser(null));
-      } finally {
-        setAuthChecked(true);
-      }
-    };
+  const checkAuth = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/auth/me`,
+        { withCredentials: true }
+      );
+      dispatch(setUser(res.data.user));
+    } catch (err) {
+      dispatch(setUser(null));
+    } finally {
+      setAuthChecked(true);
+    }
+  };
 
-    checkAuth();
-  }, [dispatch]);
+  checkAuth();
+}, [dispatch]);
 
   // ===== FETCH PRODUCTS ONCE =====
  useEffect(() => {
@@ -75,7 +75,7 @@ function App() {
           <Route path="/" element={<Home products={products} />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/ForgotPassword" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/addproduct" element={<AddProduct />} />
