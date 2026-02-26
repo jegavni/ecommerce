@@ -92,8 +92,8 @@ const Header = ({ products, activeSection, setActiveSection }) => {
     return () => clearTimeout(delay);
   }, [search, products]);
 
-  const handleLogout = () => {
-    dispatch(logout());
+  const handleLogout = async () => {
+   await dispatch(logout());
     setDrawerOpen(false);
     navigate("/login");
   };

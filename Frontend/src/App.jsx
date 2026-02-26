@@ -69,13 +69,13 @@ function App() {
         {/* PUBLIC */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+          <Route path="/ForgotPassword" element={<ForgotPassword />} />
 
         {/* PROTECTED */}
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Home products={products} />} />
           <Route path="/orders" element={<Orders />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/ForgotPassword" element={<ForgotPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/product/:id" element={<ProductDetails />} />
           <Route path="/addproduct" element={<AddProduct />} />

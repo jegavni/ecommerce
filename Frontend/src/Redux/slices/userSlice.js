@@ -35,7 +35,21 @@ export const getCurrentUser = createAsyncThunk(
     }
   }
 );
-
+export const logoutUser = createAsyncThunk(
+  "user/logoutUser",
+  async (_, { rejectWithValue }) => {
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      );
+      return true;
+    } catch (err) {
+      return rejectWithValue("Logout failed");
+    }
+  }
+);
 
 /* =======================
    USER SLICE
@@ -77,21 +91,26 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.error = null;
+      })
       .addCase(getCurrentUser.fulfilled, (state, action) => {
-     
+
         state.loading = false;
         state.user = action.payload.user || null;
-    })
+      })
 
-    .addCase(getCurrentUser.rejected, (state) => {
-      state.loading = false;
-      state.user = null;
-    })
-    .addCase(getCurrentUser.pending, (state) => {
-      state.loading = true;
-    });
+      .addCase(getCurrentUser.rejected, (state) => {
+        state.loading = false;
+        state.user = null;
+      })
+      .addCase(getCurrentUser.pending, (state) => {
+        state.loading = true;
+      });
   },
 });
 
-export const { logout,setUser } = userSlice.actions;
+export const { logout, setUser } = userSlice.actions;
 export default userSlice.reducer;
