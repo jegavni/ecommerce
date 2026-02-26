@@ -26,12 +26,13 @@ const AdminProducts = () => {
     const fetchPending = async () => {
       try {
         const { data } = await axios.get(
-          "http://`${import.meta.env.vite_api_url}`/api/admin/products/pending",
+          `${import.meta.env.VITE_API_URL}/api/admin/products/pending`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
         setProducts(data);
+        console.log("Fetched pending products:", data);
       } catch (err) {
         console.error("Failed to load pending products", err);
       } finally {

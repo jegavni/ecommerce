@@ -17,7 +17,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import { useNavigate, useLocation } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../Redux/slices/userSlice";
+import { logoutUser } from "../Redux/slices/userSlice";
 import RegisterModal from "./registerModal";
 
 /* ===== ROLE BASED MENU ===== */
@@ -93,7 +93,7 @@ const Header = ({ products, activeSection, setActiveSection }) => {
   }, [search, products]);
 
   const handleLogout = async () => {
-   await dispatch(logout());
+   await dispatch(logoutUser());
     setDrawerOpen(false);
     navigate("/login");
   };

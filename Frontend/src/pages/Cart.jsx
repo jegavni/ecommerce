@@ -141,7 +141,7 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
         handler: async function (response) {
           // 2️⃣ After Successful Payment → Save Order in DB
-          await axios.post("http://`${import.meta.env.vite_api_url}`/api/orders", {
+          await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, {
             userId: user._id,
             items: cart.map((item) => ({
               productId: item._id,
