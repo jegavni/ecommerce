@@ -84,7 +84,7 @@ const Login = () => {
 
             <Typography textAlign="right" mt={1} mb={1}>
               <Link
-                to="/forgotPassword"
+                to="/ForgotPassword"
                 style={{ textDecoration: "none", color: "#1976d2" }}
               >
                 Forgot Password?
