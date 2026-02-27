@@ -21,6 +21,10 @@ export const loginUser = createAsyncThunk(
     }
   }
 );
+
+/* =======================
+   GET CURRENT USER
+======================= */
 export const getCurrentUser = createAsyncThunk(
   "user/getCurrentUser",
   async (_, { rejectWithValue }) => {
@@ -30,11 +34,15 @@ export const getCurrentUser = createAsyncThunk(
         { withCredentials: true }
       );
       return data; // { user }
-    } catch (err) {
+    } catch {
       return rejectWithValue(null);
     }
   }
 );
+
+/* =======================
+   LOGOUT USER
+======================= */
 export const logoutUser = createAsyncThunk(
   "user/logoutUser",
   async (_, { rejectWithValue }) => {
@@ -45,7 +53,7 @@ export const logoutUser = createAsyncThunk(
         { withCredentials: true }
       );
       return true;
-    } catch (err) {
+    } catch {
       return rejectWithValue("Logout failed");
     }
   }
@@ -56,10 +64,12 @@ export const logoutUser = createAsyncThunk(
 ======================= */
 const userSlice = createSlice({
   name: "user",
+
   initialState: {
     user: null,
     token: null,
-    loading: false,
+    loading: false,       // login button state
+    checkingAuth: true,   // app startup auth check
     error: null,
   },
 
@@ -69,48 +79,51 @@ const userSlice = createSlice({
       state.token = null;
       state.error = null;
     },
-    setUser: (state, action) => {
-      state.user = action.payload;
-    },
   },
-
 
   extraReducers: (builder) => {
     builder
-      // LOGIN
+
+      /* ===== LOGIN ===== */
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
+
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
       })
+
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-      .addCase(logoutUser.fulfilled, (state) => {
-        state.user = null;
-        state.token = null;
-        state.error = null;
-      })
-      .addCase(getCurrentUser.fulfilled, (state, action) => {
 
-        state.loading = false;
+      /* ===== AUTH CHECK ===== */
+      .addCase(getCurrentUser.pending, (state) => {
+        state.checkingAuth = true;
+      })
+
+      .addCase(getCurrentUser.fulfilled, (state, action) => {
+        state.checkingAuth = false;
         state.user = action.payload.user || null;
       })
 
       .addCase(getCurrentUser.rejected, (state) => {
-        state.loading = false;
+        state.checkingAuth = false;
         state.user = null;
       })
-      .addCase(getCurrentUser.pending, (state) => {
-        state.loading = true;
+
+      /* ===== LOGOUT ===== */
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.user = null;
+        state.token = null;
+        state.error = null;
       });
   },
 });
 
-export const { logout, setUser } = userSlice.actions;
+export const { logout,setUser } = userSlice.actions;
 export default userSlice.reducer;
