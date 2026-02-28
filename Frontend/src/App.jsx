@@ -1,9 +1,8 @@
 import { Routes, Route } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
-import axios from "axios";
 
-import { setUser } from "./Redux/slices/userSlice.js";
+import { getCurrentUser } from "./Redux/slices/userSlice";
 
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -31,26 +30,12 @@ import API from "./api/axios";
 function App() {
   const dispatch = useDispatch();
 
-  const [authChecked, setAuthChecked] = useState(false);
+  const { checkingAuth } = useSelector((state) => state.user);
   const [products, setProducts] = useState([]);
 
   /* ===== AUTH CHECK ON APP START ===== */
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_API_URL}/api/auth/me`,
-          { withCredentials: true }
-        );
-        dispatch(setUser(res.data.user));
-      } catch {
-        dispatch(setUser(null));
-      } finally {
-        setAuthChecked(true);
-      }
-    };
-
-    checkAuth();
+    dispatch(getCurrentUser());
   }, [dispatch]);
 
   /* ===== FETCH PRODUCTS ===== */
@@ -61,7 +46,7 @@ function App() {
   }, []);
 
   /* ===== WAIT FOR AUTH CHECK ===== */
-  if (!authChecked) {
+  if (checkingAuth) {
     return <div style={{ padding: 20 }}>Loading...</div>;
   }
 
@@ -69,29 +54,29 @@ function App() {
     <>
       <Routes>
 
-        {/* PUBLIC */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/ForgotPassword" element={<ForgotPassword />} />
+  {/* PUBLIC */}
+  <Route path="/" element={<Home products={products} />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/register" element={<Register />} />
+  <Route path="/ForgotPassword" element={<ForgotPassword />} />
+  <Route path="/product/:id" element={<ProductDetails />} />
+  <Route path="/search" element={<Search products={products} />} />
 
-        {/* PROTECTED */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<Home products={products} />} />
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-          <Route path="/product/:id" element={<ProductDetails />} />
-          <Route path="/addproduct" element={<AddProduct />} />
-          <Route path="/seller/product/edit/:id" element={<AddProduct />} />
-          <Route path="/sellerForm" element={<SellerForm />} />
-          <Route path="/seller/dashboard" element={<SellerDashboard />} />
-          <Route path="/adminproduct" element={<AdminProduct />} />
-          <Route path="/pay" element={<PayPage />} />
-          <Route path="/search" element={<Search products={products} />} />
-          <Route path="/recentlyViewed" element={<RecentlyViewedPage />} />
-        </Route>
+  {/* PROTECTED */}
+  <Route element={<ProtectedRoute />}>
+    <Route path="/orders" element={<Orders />} />
+    <Route path="/cart" element={<Cart />} />
+    <Route path="/pay" element={<PayPage />} />
+    <Route path="/addproduct" element={<AddProduct />} />
+    <Route path="/seller/product/edit/:id" element={<AddProduct />} />
+    <Route path="/sellerForm" element={<SellerForm />} />
+    <Route path="/seller/dashboard" element={<SellerDashboard />} />
+    <Route path="/adminproduct" element={<AdminProduct />} />
+    <Route path="/recentlyViewed" element={<RecentlyViewedPage />} />
+    <Route path="/reset-password/:token" element={<ResetPassword />} />
+  </Route>
 
-      </Routes>
+</Routes>
 
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </>

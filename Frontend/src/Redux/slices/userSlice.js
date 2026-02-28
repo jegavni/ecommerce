@@ -68,12 +68,17 @@ const userSlice = createSlice({
   initialState: {
     user: null,
     token: null,
-    loading: false,       // login button state
-    checkingAuth: true,   // app startup auth check
+    loading: false,
+    checkingAuth: true,
     error: null,
   },
 
   reducers: {
+    /* ✅ ADD THIS */
+    setUser: (state, action) => {
+      state.user = action.payload;
+    },
+
     logout: (state) => {
       state.user = null;
       state.token = null;
@@ -84,39 +89,35 @@ const userSlice = createSlice({
   extraReducers: (builder) => {
     builder
 
-      /* ===== LOGIN ===== */
+      /* LOGIN */
       .addCase(loginUser.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
       })
-
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
 
-      /* ===== AUTH CHECK ===== */
+      /* AUTH CHECK */
       .addCase(getCurrentUser.pending, (state) => {
         state.checkingAuth = true;
       })
-
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.checkingAuth = false;
         state.user = action.payload.user || null;
       })
-
       .addCase(getCurrentUser.rejected, (state) => {
         state.checkingAuth = false;
         state.user = null;
       })
 
-      /* ===== LOGOUT ===== */
+      /* LOGOUT */
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
         state.token = null;
@@ -125,5 +126,5 @@ const userSlice = createSlice({
   },
 });
 
-export const { logout,setUser } = userSlice.actions;
+export const { logout, setUser } = userSlice.actions;
 export default userSlice.reducer;
