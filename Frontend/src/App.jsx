@@ -28,7 +28,6 @@ import API from "./api/axios";
 function App() {
   const dispatch = useDispatch();
 
-  const { checkingAuth } = useSelector((state) => state.user);
   const [products, setProducts] = useState([]);
 
   /* ===== AUTH CHECK ON APP START ===== */
@@ -44,9 +43,7 @@ function App() {
   }, []);
 
   /* ===== WAIT FOR AUTH CHECK ===== */
-  if (checkingAuth) {
-    return <div style={{ padding: 20 }}>Loading...</div>;
-  }
+  
 
   return (
     <>
