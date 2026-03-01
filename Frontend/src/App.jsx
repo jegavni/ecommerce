@@ -27,19 +27,23 @@ import API from "./api/axios";
 
 function App() {
   const dispatch = useDispatch();
+
   const { checkingAuth } = useSelector((state) => state.user);
   const [products, setProducts] = useState([]);
 
+  /* ===== AUTH CHECK ON APP START ===== */
   useEffect(() => {
     dispatch(getCurrentUser());
   }, [dispatch]);
 
+  /* ===== FETCH PRODUCTS ===== */
   useEffect(() => {
     API.get("/api/products").then((res) => {
       setProducts(res.data.products || []);
     });
   }, []);
 
+  /* ===== WAIT FOR AUTH CHECK ===== */
   if (checkingAuth) {
     return <div style={{ padding: 20 }}>Loading...</div>;
   }
@@ -48,29 +52,29 @@ function App() {
     <>
       <Routes>
 
-        {/* PUBLIC */}
-        <Route path="/" element={<Home products={products} />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/ForgotPassword" element={<ForgotPassword />} />
-        <Route path="/product/:id" element={<ProductDetails />} />
-        <Route path="/search" element={<Search products={products} />} />
+  {/* PUBLIC */}
+  <Route path="/" element={<Home products={products} />} />
+  <Route path="/login" element={<Login />} />
+  <Route path="/register" element={<Register />} />
+  <Route path="/ForgotPassword" element={<ForgotPassword />} />
+  <Route path="/product/:id" element={<ProductDetails />} />
+  <Route path="/search" element={<Search products={products} />} />
 
-        {/* PROTECTED */}
-        <Route element={<ProtectedRoute />}>
-          <Route path="/orders" element={<Orders />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/pay" element={<PayPage />} />
-          <Route path="/addproduct" element={<AddProduct />} />
-          <Route path="/seller/product/edit/:id" element={<AddProduct />} />
-          <Route path="/sellerForm" element={<SellerForm />} />
-          <Route path="/seller/dashboard" element={<SellerDashboard />} />
-          <Route path="/adminproduct" element={<AdminProduct />} />
-          <Route path="/recentlyViewed" element={<RecentlyViewedPage />} />
-          <Route path="/reset-password/:token" element={<ResetPassword />} />
-        </Route>
+  {/* PROTECTED */}
+  <Route element={<ProtectedRoute />}>
+    <Route path="/orders" element={<Orders />} />
+    <Route path="/cart" element={<Cart />} />
+    <Route path="/pay" element={<PayPage />} />
+    <Route path="/addproduct" element={<AddProduct />} />
+    <Route path="/seller/product/edit/:id" element={<AddProduct />} />
+    <Route path="/sellerForm" element={<SellerForm />} />
+    <Route path="/seller/dashboard" element={<SellerDashboard />} />
+    <Route path="/adminproduct" element={<AdminProduct />} />
+    <Route path="/recentlyViewed" element={<RecentlyViewedPage />} />
+    <Route path="/reset-password/:token" element={<ResetPassword />} />
+  </Route>
 
-      </Routes>
+</Routes>
 
       <ToastContainer position="top-right" autoClose={3000} theme="colored" />
     </>

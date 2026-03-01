@@ -56,7 +56,7 @@ app.use("/api/recentlyViewed", recentlyViewedRoutes);
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
-
+app.set("trust proxy", 1);
 app.get("/cookie-test", (req, res) => {
   res.json({
     cookies: req.cookies,
