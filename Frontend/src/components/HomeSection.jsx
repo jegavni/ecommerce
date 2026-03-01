@@ -16,14 +16,14 @@ export const HomeSection = ({ title, products = [] }) => {
         <p className="font-semibold mb-2">{title}</p>
 
         <div className="grid grid-cols-2 gap-2">
-          {products?.map((product) => {
+          {products?.map((product,index) => {
             const imageUrl = product?.images?.[0]?.url;
 
             if (!imageUrl) return null;
 
             return (
               <img
-                key={product.id}
+                key={product.id||product._id||index}
                 src={imageUrl}
                 alt={product?.title || "product image"}
                 className="w-full h-full object-cover"

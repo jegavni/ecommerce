@@ -32,8 +32,22 @@ app.use(fileUpload({
   tempFileDir: "/tmp/",
 }));
 
+const allowedOrigins = [
+  "http://localhost:5173",                 // development frontend
+  "https://ecommerce-t7cc.onrender.com",  // production frontend
+];
+
 app.use(cors({
-  origin: "https://ecommerce-t7cc.onrender.com",
+  origin: function (origin, callback) {
+    // allow requests with no origin (like Postman or mobile apps)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 

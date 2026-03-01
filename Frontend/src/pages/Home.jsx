@@ -69,16 +69,25 @@ const HomePage = ({ products = [] }) => {
         <>
           {/* CATEGORY CARDS */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
-            <HomeSection
-              title="Pick up where you left off"
-              products={recentlyViewed}
-            />
+            {user && (
+              <HomeSection
+                title="Pick up where you left off"
+                products={recentlyViewed}
+              />
+            )}
             <HomeSection title="Keep shopping for" />
-            <HomeSection title="Buy again" />
-            <HomeSection
-              title="Deals & Offers"
-              products={recentlyViewed}
-            />
+            {user && (
+              <HomeSection title="Recommended for you" products={products} />
+            )}
+           {user && (
+              <HomeSection title="Buy again" products={products} />
+            )}
+            
+            {user && (
+              <HomeSection title="deals and offers" products={products} />
+            )}
+
+            
           </div>
 
           {/* HERO BANNER */}
