@@ -92,7 +92,7 @@ const userSlice = createSlice({
 
       /* LOGIN */
       .addCase(loginUser.pending, (state) => {
-        state.loading = true;
+        state.loading = false;
         state.error = null;
       })
       .addCase(loginUser.fulfilled, (state, action) => {
