@@ -33,7 +33,7 @@ app.use(fileUpload({
 }));
 
 app.use(cors({
-  origin: process.env.CLIENT_URL, // your frontend URL
+  origin: "https://ecommerce-t7cc.onrender.com",
   credentials: true,
 }));
 
