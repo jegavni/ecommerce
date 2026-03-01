@@ -61,13 +61,15 @@ export const login = async (req, res) => {
     );
 
     // ✅ SET COOKIE (THIS WAS MISSING)
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: true,        // MUST be false on localhost
-      sameSite: "none",
-      path: "/",
-      maxAge: 60*24 * 60 * 1000,
-    });
+    const isProd = process.env.NODE_ENV === "production";
+
+res.cookie("token", token, {
+  httpOnly: true,
+  secure: isProd,
+  sameSite: isProd ? "none" : "lax",
+  path: "/",
+  maxAge: 24 * 60 * 60 * 1000,
+});
 
     res.status(200).json({
       message: "Login successful",
