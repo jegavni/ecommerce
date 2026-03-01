@@ -70,7 +70,7 @@ const userSlice = createSlice({
     user: null,
     token: null,
     loading: false,
-    checkingAuth: true,
+    checkingAuth: false,
     error: null,
   },
 
