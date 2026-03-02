@@ -26,14 +26,11 @@ import RecentlyViewedPage from "./pages/recentlViewed.jsx";
 import API from "./api/axios";
 
 function App() {
-  const dispatch = useDispatch();
 
   const [products, setProducts] = useState([]);
 
   /* ===== AUTH CHECK ON APP START ===== */
-  useEffect(() => {
-    dispatch(getCurrentUser());
-  }, [dispatch]);
+  
 
   /* ===== FETCH PRODUCTS ===== */
   useEffect(() => {
