@@ -13,7 +13,7 @@ import {
   Box,
 } from "@mui/material";
 
-import { loginUser } from "../Redux/slices/userSlice";
+import { loginUser, resetAuthState } from "../Redux/slices/userSlice";
 
 const Login = () => {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -21,9 +21,15 @@ const Login = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const { user, loading, error } = useSelector((state) => state.user);
+  const { loading, error, user } = useSelector((state) => state.user);
 
-  const handleSubmit = (e) => {
+  // ✅ Reset state when page loads
+  useEffect(() => {
+    dispatch(resetAuthState());
+  }, [dispatch]);
+
+  // ✅ Handle login submit
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.email || !form.password) {
@@ -31,23 +37,14 @@ const Login = () => {
       return;
     }
 
-    dispatch(loginUser(form));
-  };
-
-  // ✅ Handle success
-  useEffect(() => {
-    if (user) {
+    try {
+      await dispatch(loginUser(form)).unwrap();
       toast.success("✅ Login successful");
       navigate("/");
+    } catch (err) {
+      toast.error(err || "Login failed");
     }
-  }, [user, navigate]);
-
-  // ❌ Handle error
-  useEffect(() => {
-    if (error) {
-      toast.error(error);
-    }
-  }, [error]);
+  };
 
   return (
     <Container maxWidth="sm" sx={{ mt: 8 }}>
@@ -83,10 +80,7 @@ const Login = () => {
             />
 
             <Typography textAlign="right" mt={1} mb={1}>
-              <Link
-                to="/ForgotPassword"
-                style={{ textDecoration: "none", color: "#1976d2" }}
-              >
+              <Link to="/ForgotPassword" style={{ textDecoration: "none", color: "#1976d2" }}>
                 Forgot Password?
               </Link>
             </Typography>
@@ -96,9 +90,9 @@ const Login = () => {
               fullWidth
               variant="contained"
               sx={{ mt: 2, py: 1.3 }}
-              disabled={loading }
+              disabled={loading}
             >
-              {loading ? "Logging in.." : "Login"}
+              {loading ? "Logging in..." : "Login"}
             </Button>
 
             <Typography textAlign="center" mt={2}>

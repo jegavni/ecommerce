@@ -33,6 +33,7 @@ export const protect = async (req, res, next) => {
     }
 
     req.user = user;
+    console.log("Authenticated user:", user.email);
     next();
   } catch (error) {
     return res.status(401).json({ message: "Invalid or expired token" });
