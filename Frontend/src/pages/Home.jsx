@@ -3,6 +3,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import AIShopAssistant from "../components/AIShopAssistant";
 
 import Header from "../components/Header";
 import { HomeSection } from "../components/HomeSection.jsx";
@@ -91,7 +92,9 @@ const HomePage = ({ products = [] }) => {
           </div>
 
           {/* HERO BANNER */}
-          <div className="bg-yellow-300 p-4">
+            <div className="bg-white rounded-xl p-4 flex items-center justify-between
+                shadow-md transition-all duration-300
+                animate-float">
             <div className="bg-white rounded-xl p-4 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-bold">Get set & fly to Dubai</h2>
@@ -115,10 +118,16 @@ const HomePage = ({ products = [] }) => {
 
                 return (
                   <Card
-                    key={product._id}
-                    className="relative rounded-xl cursor-pointer hover:shadow-lg transition bg-white"
-                    onClick={() => navigate(`/product/${product._id}`)}
-                  >
+  key={product._id}
+  onClick={() => navigate(`/product/${product._id}`)}
+  className="
+    relative rounded-xl cursor-pointer bg-white
+    transition-all duration-300 ease-out
+    hover:-translate-y-2 hover:scale-[1.02]
+    hover:shadow-2xl
+    will-change-transform
+  "
+>
                     {index < 3 && (
                       <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs px-2 py-1 rounded">
                         #{index + 1} Best Seller
@@ -226,7 +235,10 @@ const HomePage = ({ products = [] }) => {
           <h2 className="text-xl font-bold">Orders</h2>
         </div>
       )}
+      
+      <AIShopAssistant />
     </div>
+    
   );
 };
 

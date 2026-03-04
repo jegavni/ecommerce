@@ -6,7 +6,7 @@ const ProductReviewCard = ({ product, onAction }) => {
   const token = useSelector((state) => state.user?.token);
   const handleApprove = async () => {
     await axios.put(
-      `http://localhost:5000/api/admin/products/${product._id}/approve`,
+      `${import.meta.env.VITE_API_URL}/api/admin/products/${product._id}/approve`,
       {},
       { headers: { Authorization: `Bearer ${token}` } }
     );

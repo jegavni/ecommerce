@@ -25,6 +25,8 @@ import Search from "./pages/search.jsx";
 import RecentlyViewedPage from "./pages/recentlViewed.jsx";
 import API from "./api/axios";
 
+
+
 function App() {
 
   const [products, setProducts] = useState([]);

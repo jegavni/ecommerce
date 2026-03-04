@@ -16,7 +16,7 @@ import sellerRoutes from "./routes/sellerRoutes.js";
 import addressRoutes from "./routes/address.routes.js";
 import adminProductRoutes from "./routes/adminProductRoutes.js";
 import recentlyViewedRoutes from "./routes/recentlyViewedRoutes.js";
-
+import AiRoutes from "./routes/AiRoutes.js";
 const app = express();
 
 /* ======================
@@ -69,6 +69,7 @@ app.use("/api/seller", sellerRoutes);
 app.use("/api/users", addressRoutes);
 app.use("/api/admin/products", adminProductRoutes);
 app.use("/api/recentlyViewed", recentlyViewedRoutes);
+app.use("/api/ai", AiRoutes);
 
 app.get("/", (req, res) => {
   res.send("API is running...");
