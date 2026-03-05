@@ -1,113 +1,54 @@
 import { useState, useEffect, memo } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  Drawer,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  Divider
-} from "@mui/material";
-
+import { Box, Typography, IconButton, Drawer } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
-import CloseIcon from "@mui/icons-material/Close";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logoutUser } from "../Redux/slices/userSlice";
-import RegisterModal from "./registerModal";
+import axios from "axios";
 
-/* ===== ROLE BASED MENU ===== */
-const drawerMenuByRole = {
-  admin: [
-    { label: "Home", path: "/", section: "home" },
-    { label: "Pending Products", path: "/adminproduct", section: "pending" },
-    { label: "Users", path: "/admin/users", section: "users" },
-    { label: "Orders", path: "/admin/orders", section: "adminOrders" }
-  ],
-
-  seller: [
-    { label: "Home", path: "/", section: "home" },
-    { label: "My Products", path: "/addproduct", section: "sellerProducts" },
-    { label: "Orders", path: "/seller/orders", section: "sellerOrders" }
-  ],
-
-  user: [
-    { label: "Home", path: "/", section: "home" },
-    { label: "Your Orders", path: "/orders", section: "orders" },
-    { label: "Your Cart", path: "/cart", section: "cart" }
-  ],
-
-  guest: [
-    { label: "Home", path: "/", section: "home" }
-  ]
-};
-
-const Header = ({ products, activeSection, setActiveSection }) => {
+const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [openRegister, setOpenRegister] = useState(false);
-  const [search, setSearch] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
+  const [defaultAddress, setDefaultAddress] = useState(null);
 
   const navigate = useNavigate();
-  const location = useLocation();
   const dispatch = useDispatch();
 
   const user = useSelector((state) => state.user.user);
   const cartItems = useSelector((state) => state.cart.items);
 
-  const role = user?.role || "guest";
-  const menuItems = drawerMenuByRole[role];
-
-  /* ===== AUTO SYNC ACTIVE SECTION WITH URL ===== */
+  // Fetch default address
   useEffect(() => {
-    const current = menuItems.find(item => item.path === location.pathname);
-    if (current) setActiveSection(current.section);
-  }, [location.pathname]);
+    if (!user?._id) return;
 
-  /* ===== SEARCH WITH DEBOUNCE ===== */
-  useEffect(() => {
-    const delay = setTimeout(() => {
-      if (!search.trim()) {
-        setSuggestions([]);
-        return;
+    const fetchDefaultAddress = async () => {
+      try {
+        const res = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`
+        );
+
+        const addresses = res.data.addresses || res.data || [];
+        const defaultAddr =
+          addresses.find((a) => a.isDefault) || addresses[0] || null;
+
+        setDefaultAddress(defaultAddr);
+      } catch (err) {
+        console.error("Failed to fetch addresses", err);
       }
+    };
 
-      const q = search.toLowerCase();
-
-      const filtered = products
-        .filter(
-          p =>
-            p.title?.toLowerCase().includes(q) ||
-            p.category?.toLowerCase().includes(q)
-        )
-        .slice(0, 5);
-
-      setSuggestions(filtered);
-    }, 300);
-
-    return () => clearTimeout(delay);
-  }, [search, products]);
+    fetchDefaultAddress();
+  }, [user?._id]);
 
   const handleLogout = async () => {
-   await dispatch(logoutUser());
-    setDrawerOpen(false);
+    await dispatch(logoutUser());
     navigate("/login");
-  };
-
-  const handleSearchSubmit = (e) => {
-    if (e.key === "Enter") {
-      navigate(`/search?q=${search}`);
-      setSuggestions([]);
-    }
   };
 
   return (
     <>
-      {/* ===== HEADER BAR ===== */}
+      {/* Header */}
       <Box
         sx={{
           backgroundColor: "#131921",
@@ -116,80 +57,69 @@ const Header = ({ products, activeSection, setActiveSection }) => {
           alignItems: "center",
           gap: 2,
           px: 2,
-          py: 1
+          py: 1,
         }}
       >
+        {/* Menu Icon */}
         <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: "white" }}>
           <MenuIcon />
         </IconButton>
 
+        {/* Logo */}
         <Typography
           variant="h6"
-          sx={{ fontWeight: "bold", cursor: "pointer" }}
+          sx={{ cursor: "pointer", fontWeight: "bold" }}
           onClick={() => navigate("/")}
         >
-          inskart
+          EasyShop
         </Typography>
 
-        <Box sx={{ flex: 1, position: "relative" }}>
-          <TextField
-            fullWidth
-            size="small"
-            placeholder="Search products"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={handleSearchSubmit}
-            sx={{ backgroundColor: "white", borderRadius: 1 }}
-          />
+        {/* Delivery Address */}
+        {defaultAddress && (
+          <Box
+            sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
+            onClick={() => navigate("/cart")}
+          >
+            <LocationOnIcon fontSize="small" sx={{ mr: 0.5 }} />
 
-          {suggestions.length > 0 && (
-            <Box
-              sx={{
-                position: "absolute",
-                top: 40,
-                width: "100%",
-                bgcolor: "white",
-                boxShadow: 3,
-                borderRadius: 1,
-                zIndex: 10
-              }}
-            >
-              {suggestions.map((item) => (
-                <Box
-                  key={item._id}
-                  sx={{
-                    p: 1,
-                    cursor: "pointer",
-                    color: "black",
-                    "&:hover": { bgcolor: "grey", color: "white" }
-                  }}
-                  onClick={() => navigate(`/product/${item._id}`)}
-                >
-                  {item.title}
-                </Box>
-              ))}
+            <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+              <Typography variant="caption">Deliver to</Typography>
+
+              <Typography variant="body2" fontWeight="bold">
+                {defaultAddress.name} - {defaultAddress.city}
+              </Typography>
             </Box>
-          )}
-        </Box>
+          </Box>
+        )}
 
-        <Box sx={{ fontSize: 12 }}>
+        <Box sx={{ flex: 1 }} />
+
+        {/* User */}
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+          <Typography variant="body2">
+            {user ? `Hello, ${user.name}` : "Hello, Sign in"}
+          </Typography>
+
           {user ? (
-            <>
-              <div>Hello, {user.name}</div>
-              <Button onClick={handleLogout} sx={{ color: "white", p: 0 }}>
-                Logout
-              </Button>
-            </>
+            <Typography
+              variant="body2"
+              sx={{ cursor: "pointer" }}
+              onClick={handleLogout}
+            >
+              Logout
+            </Typography>
           ) : (
-            <>
-              <div>Hello, sign in</div>
-              <Button onClick={() => setOpenRegister(true)} sx={{ color: "white", p: 0 }}>
-                Register
-              </Button>
-            </>
+            <Typography
+              variant="body2"
+              sx={{ cursor: "pointer" }}
+              onClick={() => navigate("/login")}
+            >
+              Login / Register
+            </Typography>
           )}
         </Box>
 
+        {/* Cart */}
         <Box
           sx={{ cursor: "pointer", fontWeight: "bold" }}
           onClick={() => navigate("/cart")}
@@ -198,67 +128,93 @@ const Header = ({ products, activeSection, setActiveSection }) => {
         </Box>
       </Box>
 
-      {/* ===== SIDE DRAWER ===== */}
-      <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box sx={{ width: 260 }}>
-          <Box
-            sx={{
-              backgroundColor: "#232f3e",
-              color: "white",
-              p: 2,
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}
-          >
-            <Typography variant="subtitle1">
-              {user ? `Hello, ${user.name}` : "Welcome"}
-            </Typography>
+      {/* Drawer */}
+      <Drawer
+  anchor="left"
+  open={drawerOpen}
+  onClose={() => setDrawerOpen(false)}
+>
+  <Box sx={{ width: 300 }}>
 
-            <IconButton onClick={() => setDrawerOpen(false)} sx={{ color: "white" }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
+    {/* Header */}
+    <Box sx={{ background: "#232F3E", color: "white", p: 2 }}>
+      <Typography variant="h6">
+        {user ? `Hello, ${user.name}` : "Hello, Sign in"}
+      </Typography>
+    </Box>
 
-          <List>
-            {menuItems.map((item) => {
-              const isActive = activeSection === item.section;
+    {/* Trending */}
+    <Box sx={{ p: 2 }}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        Trending
+      </Typography>
 
-              return (
-                <ListItem
-                  button
-                  key={item.path}
-                  onClick={() => {
-                    setActiveSection(item.section);
-                    navigate(item.path);
-                    setDrawerOpen(false);
-                  }}
-                  sx={{
-                    bgcolor: isActive ? "#e3f2fd" : "transparent",
-                    color: isActive ? "#1976d2" : "inherit"
-                  }}
-                >
-                  <ListItemText primary={item.label} />
-                </ListItem>
-              );
-            })}
+      <Typography sx={{ cursor: "pointer", mt: 1 }}>Bestsellers</Typography>
+      <Typography sx={{ cursor: "pointer" }}>New Releases</Typography>
+      <Typography sx={{ cursor: "pointer" }}>Movers and Shakers</Typography>
+    </Box>
 
-            <Divider />
+    {/* Digital Content */}
+    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        Digital Content and Devices
+      </Typography>
 
-            {!user ? (
-              <ListItem button onClick={() => setOpenRegister(true)}>
-                <ListItemText primary="Sign In / Register" />
-              </ListItem>
-            ) : (
-              <ListItem button onClick={handleLogout}>
-                <ListItemText primary="Logout" />
-              </ListItem>
-            )}
-          </List>
-        </Box>
-      </Drawer>
+      <Typography sx={{ mt: 1 }}>Echo & Alexa</Typography>
+      <Typography>Fire TV</Typography>
+      <Typography>Kindle E-Readers & eBooks</Typography>
+      <Typography>Audible Audiobooks</Typography>
+      <Typography>Prime Video</Typography>
+      <Typography>Prime Music</Typography>
+    </Box>
 
-      <RegisterModal open={openRegister} onClose={() => setOpenRegister(false)} />
+    {/* Shop by Category */}
+    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        Shop by Category
+      </Typography>
+
+      <Typography sx={{ mt: 1 }}>Mobiles, Computers</Typography>
+      <Typography>TV, Appliances, Electronics</Typography>
+      <Typography>Men's Fashion</Typography>
+      <Typography>Women's Fashion</Typography>
+      <Typography sx={{ color: "#007185" }}>See all</Typography>
+    </Box>
+
+    {/* Programs */}
+    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        Programs & Features
+      </Typography>
+
+      <Typography sx={{ mt: 1 }}>Gift Cards & Mobile Recharges</Typography>
+      <Typography>Amazon Launchpad</Typography>
+      <Typography>Amazon Business</Typography>
+      <Typography>Handloom and Handicrafts</Typography>
+      <Typography sx={{ color: "#007185" }}>See all</Typography>
+    </Box>
+
+    {/* Help */}
+    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
+      <Typography variant="subtitle1" fontWeight="bold">
+        Help & Settings
+      </Typography>
+
+      <Typography sx={{ mt: 1 }}>Your Account</Typography>
+      <Typography>Customer Service</Typography>
+
+      {user && (
+        <Typography
+          sx={{ cursor: "pointer", color: "red" }}
+          onClick={handleLogout}
+        >
+          Sign Out
+        </Typography>
+      )}
+    </Box>
+
+  </Box>
+</Drawer>
     </>
   );
 };

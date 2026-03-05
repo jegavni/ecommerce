@@ -38,19 +38,20 @@ const Cart = () => {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
+
   const [openAddressModal, setOpenAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
-const [paymentMethod, setPaymentMethod] = useState("ONLINE"); 
-// ONLINE or COD
+
+  const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
   const totalAmount = cart.reduce(
     (sum, item) => sum + item.price * item.qty,
     0
   );
 
-  /* =======================
+  /* =========================
      FETCH ADDRESSES
-  ======================= */
+  ========================== */
   useEffect(() => {
     if (!user?._id) return;
 
@@ -80,53 +81,41 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
     fetchAddresses();
   }, [user?._id]);
 
+  /* =========================
+     SAVE ORDER (Reusable)
+  ========================== */
+  const saveOrder = async ({
+    paymentMethod,
+    paymentStatus,
+    razorpayPaymentId = null,
+  }) => {
+    await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, {
+      userId: user._id,
+      items: cart.map((item) => ({
+        productId: item._id,
+        title: item.title,
+        price: Number(item.price),
+        qty: Number(item.qty),
+      })),
+      address: selectedAddress,
+      totalAmount,
+      paymentMethod,
+      paymentStatus,
+      razorpayPaymentId,
+    });
 
-  /* =======================
-     ADD / EDIT ADDRESS
-  ======================= */
-  const handleEditAddress = (address) => {
-    setEditingAddress(address);
-    setOpenAddressModal(true);
+    dispatch(clearCart());
   };
 
-  const handleAddAddress = async (addressData) => {
-    try {
-      if (editingAddress) {
-        const res = await axios.put(
-          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses/${editingAddress._id}`,
-          addressData
-        );
-
-        setAddresses(res.data.addresses);
-        toast.success("✅ Address updated");
-      } else {
-        const res = await axios.post(
-          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`,
-          addressData
-        );
-
-        setAddresses(res.data.addresses);
-        toast.success("✅ Address added");
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || "Failed to save address");
-    } finally {
-      setOpenAddressModal(false);
-      setEditingAddress(null);
-    }
-  };
-
-  /* =======================
-     PLACE ORDER
-  ======================= */
+  /* =========================
+     ONLINE PAYMENT
+  ========================== */
   const makePayment = async () => {
     if (!user) return toast.error("❌ Please login");
-
     if (!selectedAddress)
-      return toast.error("❌ Please select a delivery address");
+      return toast.error("❌ Please select delivery address");
 
     try {
-      // 1️⃣ Create Razorpay Order from backend
       const { data } = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/payment/create-order`,
         { amount: totalAmount }
@@ -138,39 +127,15 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
         currency: data.order.currency,
         order_id: data.order.id,
 
-
         handler: async function (response) {
-          // 2️⃣ After Successful Payment → Save Order in DB
-          await axios.post(`${import.meta.env.VITE_API_URL}/api/orders`, {
-            userId: user._id,
-            items: cart.map((item) => ({
-              productId: item._id,
-              title: item.title,
-              price: Number(item.price),
-              qty: Number(item.qty),
-            })),
-            address: selectedAddress,
-            totalAmount,
+          await saveOrder({
             paymentMethod: "Razorpay",
             paymentStatus: "PAID",
             razorpayPaymentId: response.razorpay_payment_id,
           });
 
           toast.success("🎉 Payment Successful & Order Placed!");
-          dispatch(clearCart());
         },
-// modal: {
-//         ondismiss: function () {
-//           toast.error("❌ Payment cancelled");
-//           // optional ideas:
-//           // setPaymentMethod("COD");
-//           // openRetryDialog(true);
-//         },
-//         escape: true,
-//         backdropclose: true,
-//         handleback: true,
-//         confirm_close: true,
-//       },
 
         prefill: {
           name: user.name,
@@ -184,62 +149,78 @@ const [paymentMethod, setPaymentMethod] = useState("ONLINE");
 
       const rzp = new window.Razorpay(options);
 
-// fires when popup is closed by X, ESC, backdrop, back button
-rzp.on("modal.closed", async function () {
-  try {
-    await saveOrder({
-      paymentMethod: "COD",
-      paymentStatus: "PENDING",
-    });
+      rzp.on("payment.failed", function () {
+        toast.error("❌ Payment failed");
+      });
 
-    toast.success("🧾 Order placed with Cash on Delivery");
-  } catch (err) {
-    toast.error("❌ Failed to place COD order");
-  }
-});
+      rzp.on("modal.closed", function () {
+        toast.error("❌ Payment cancelled");
+      });
 
-// optional but recommended
-rzp.on("payment.failed", function () {
-  toast.error("❌ Payment failed");
-});
-
-rzp.open();
-
+      rzp.open();
     } catch (err) {
-      toast.error("❌ Payment Failed");
+      toast.error("❌ Payment initialization failed");
     }
   };
 
+  /* =========================
+     CASH ON DELIVERY
+  ========================== */
   const placeCODOrder = async () => {
-  if (!user) return toast.error("❌ Please login");
-  if (!selectedAddress) return toast.error("❌ Please select a delivery address");
+    if (!user) return toast.error("❌ Please login");
+    if (!selectedAddress)
+      return toast.error("❌ Please select delivery address");
 
-  try {
-    await axios.post("http://`${import.meta.env.vite_api_url}`/api/orders", {
-      userId: user._id,
-      items: cart.map((item) => ({
-        productId: item._id,
-        title: item.title,
-        price: Number(item.price),
-        qty: Number(item.qty),
-      })),
-      address: selectedAddress,
-      totalAmount,
-      paymentMethod: "COD",
-      paymentStatus: "PENDING",
-    });
+    try {
+      await saveOrder({
+        paymentMethod: "COD",
+        paymentStatus: "PENDING",
+      });
 
-    toast.success("🎉 Order placed with Cash on Delivery!");
-    dispatch(clearCart());
-  } catch (err) {
-    toast.error("❌ Failed to place order");
-  }
-};
+      toast.success("🎉 Order placed with Cash on Delivery!");
+    } catch (err) {
+      toast.error("❌ Failed to place order");
+    }
+  };
 
+  /* =========================
+     ADDRESS HANDLERS
+  ========================== */
+  const handleEditAddress = (address) => {
+    setEditingAddress(address);
+    setOpenAddressModal(true);
+  };
 
-  /* =======================
+  const handleAddAddress = async (addressData) => {
+    try {
+      let res;
+
+      if (editingAddress) {
+        res = await axios.put(
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses/${editingAddress._id}`,
+          addressData
+        );
+        toast.success("✅ Address updated");
+      } else {
+        res = await axios.post(
+          `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`,
+          addressData
+        );
+        toast.success("✅ Address added");
+      }
+
+      setAddresses(res.data.addresses);
+    } catch (err) {
+      toast.error("❌ Failed to save address");
+    } finally {
+      setOpenAddressModal(false);
+      setEditingAddress(null);
+    }
+  };
+
+  /* =========================
      EMPTY CART
-  ======================= */
+  ========================== */
   if (cart.length === 0) {
     return (
       <Typography variant="h5" textAlign="center" mt={5}>
@@ -273,14 +254,13 @@ rzp.open();
                   </Typography>
                 </Box>
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box display="flex" alignItems="center" gap={1}>
                   <IconButton
                     disabled={item.qty === 1}
                     onClick={() => dispatch(decreaseQty(item._id))}
                   >
                     <RemoveIcon />
                   </IconButton>
-
 
                   <Typography>{item.qty}</Typography>
 
@@ -343,44 +323,45 @@ rzp.open();
       >
         Total: ₹{totalAmount}
       </Typography>
-<Box mt={3}>
-  <Typography variant="h6">Payment Method</Typography>
 
-  <Box display="flex" gap={2} mt={1}>
-    <Button
-      variant={paymentMethod === "ONLINE" ? "contained" : "outlined"}
-      onClick={() => setPaymentMethod("ONLINE")}
-    >
-      Pay Online
-    </Button>
+      {/* PAYMENT METHOD */}
+      <Box mt={3}>
+        <Typography variant="h6">Payment Method</Typography>
 
-    <Button
-      variant={paymentMethod === "COD" ? "contained" : "outlined"}
-      onClick={() => setPaymentMethod("COD")}
-    >
-      Cash on Delivery
-    </Button>
-  </Box>
-</Box>
+        <Box display="flex" gap={2} mt={1}>
+          <Button
+            variant={paymentMethod === "ONLINE" ? "contained" : "outlined"}
+            onClick={() => setPaymentMethod("ONLINE")}
+          >
+            Pay Online
+          </Button>
 
+          <Button
+            variant={paymentMethod === "COD" ? "contained" : "outlined"}
+            onClick={() => setPaymentMethod("COD")}
+          >
+            Cash on Delivery
+          </Button>
+        </Box>
+      </Box>
 
       {/* PLACE ORDER */}
-  <Button
-  variant="contained"
-  color="success"
-  fullWidth
-  sx={{ mt: 3, py: 1.5 }}
-  onClick={() => {
-    if (paymentMethod === "ONLINE") {
-      makePayment();
-    } else {
-      placeCODOrder();
-    }
-  }}
->
-  {paymentMethod === "ONLINE" ? "Pay Now" : "Place Order (COD)"}
-</Button>
-    
+      <Button
+        variant="contained"
+        color="success"
+        fullWidth
+        sx={{ mt: 3, py: 1.5 }}
+        disabled={!selectedAddress || loadingAddresses}
+        onClick={() =>
+          paymentMethod === "ONLINE"
+            ? makePayment()
+            : placeCODOrder()
+        }
+      >
+        {paymentMethod === "ONLINE"
+          ? "Pay Now"
+          : "Place Order (COD)"}
+      </Button>
 
       {/* ADDRESS MODAL */}
       <AddAddressModal

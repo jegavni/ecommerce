@@ -22,7 +22,7 @@ import ProtectedRoute from "./components/protectedRoute";
 import PayPage from "./pages/pay";
 import SellerDashboard from "./pages/sellerDashboard";
 import Search from "./pages/search.jsx";
-import RecentlyViewedPage from "./pages/recentlViewed.jsx";
+import RecentlyViewedPage from "./pages/RecentlViewed.jsx";
 import API from "./api/axios";
 
 
