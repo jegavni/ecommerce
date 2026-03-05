@@ -80,19 +80,19 @@ const HomePage = ({ products = [] }) => {
             {user && (
               <HomeSection title="Recommended for you" products={products} />
             )}
-           {user && (
+            {user && (
               <HomeSection title="Buy again" products={products} />
             )}
-            
+
             {user && (
               <HomeSection title="deals and offers" products={products} />
             )}
 
-            
+
           </div>
 
           {/* HERO BANNER */}
-            <div className="bg-white rounded-xl p-4 flex items-center justify-between
+          <div className="bg-white rounded-xl p-4 flex items-center justify-between
                 shadow-md transition-all duration-300
                 animate-float">
             <div className="bg-white rounded-xl p-4 flex items-center justify-between">
@@ -101,7 +101,7 @@ const HomePage = ({ products = [] }) => {
                 <p className="text-sm text-gray-600">Starting ₹7,599</p>
               </div>
               <img
-                src="/banner-plane.png"
+                src="https://picsum.photos/400/300"
                 className="h-20 object-contain"
                 alt="banner"
               />
@@ -118,16 +118,16 @@ const HomePage = ({ products = [] }) => {
 
                 return (
                   <Card
-  key={product._id}
-  onClick={() => navigate(`/product/${product._id}`)}
-  className="
+                    key={product._id}
+                    onClick={() => navigate(`/product/${product._id}`)}
+                    className="
     relative rounded-xl cursor-pointer bg-white
     transition-all duration-300 ease-out
     hover:-translate-y-2 hover:scale-[1.02]
     hover:shadow-2xl
     will-change-transform
   "
->
+                  >
                     {index < 3 && (
                       <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs px-2 py-1 rounded">
                         #{index + 1} Best Seller
@@ -235,10 +235,10 @@ const HomePage = ({ products = [] }) => {
           <h2 className="text-xl font-bold">Orders</h2>
         </div>
       )}
-      
+
       <AIShopAssistant />
     </div>
-    
+
   );
 };
 
