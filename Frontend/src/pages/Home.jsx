@@ -3,26 +3,27 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import AIShopAssistant from "../components/AIShopAssistant";
-
-import Header from "../components/Header";
-import { HomeSection } from "../components/HomeSection.jsx";
-import { Card, CardContent } from "@/components/ui/card.tsx";
-
-import { addToCart } from "../Redux/slices/cartSlice";
 import { Rating } from "@mui/material";
 
+import Header from "../components/Header";
+import { HomeSection } from "../components/HomeSection";
+import AIShopAssistant from "../components/AIShopAssistant";
+
+import { Card, CardContent } from "@/components/ui/card";
+import { addToCart } from "../Redux/slices/cartSlice";
+
 const HomePage = ({ products = [] }) => {
+
   const [activeSection, setActiveSection] = useState("home");
   const [pendingProducts, setPendingProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-
   const { user, token } = useSelector((state) => state.user);
 
-  /* ===== FETCH RECENTLY VIEWED ===== */
+  /* ================= FETCH RECENTLY VIEWED ================= */
+
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
       credentials: "include"
@@ -32,7 +33,8 @@ const HomePage = ({ products = [] }) => {
       .catch(console.error);
   }, []);
 
-  /* ===== FETCH ADMIN PENDING PRODUCTS ===== */
+  /* ================= ADMIN PENDING PRODUCTS ================= */
+
   useEffect(() => {
     if (activeSection === "pending" && user?.role === "admin") {
       axios
@@ -44,74 +46,83 @@ const HomePage = ({ products = [] }) => {
     }
   }, [activeSection, user, token]);
 
-  /* ===== ADD TO CART ===== */
+  /* ================= ADD TO CART ================= */
+
   const handleAddToCart = (product) => {
     if (!user) {
       toast.info("Please login first");
       navigate("/login");
       return;
     }
+
     dispatch(addToCart(product));
     toast.success("Added to cart");
   };
 
   return (
-    <div className="pb-20">
+    <div className="bg-gray-200 min-h-screen">
 
-      {/* HEADER CONTROLS SECTION */}
+      {/* HEADER */}
       <Header
         products={products}
         activeSection={activeSection}
         setActiveSection={setActiveSection}
       />
 
-      {/* ================= HOME SECTION ================= */}
-      {activeSection === "home" && (
-        <>
-          {/* CATEGORY CARDS */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3">
-            {user && (
-              <HomeSection
-                title="Pick up where you left off"
-                products={recentlyViewed}
-              />
-            )}
-            <HomeSection title="Keep shopping for" />
-            {user && (
-              <HomeSection title="Recommended for you" products={products} />
-            )}
-            {user && (
-              <HomeSection title="Buy again" products={products} />
-            )}
+      {/* CENTER CONTAINER */}
+      <div className="max-w-[1600px] mx-auto px-6 pb-20">
 
-            {user && (
-              <HomeSection title="deals and offers" products={products} />
-            )}
-
-
-          </div>
-
-          {/* HERO BANNER */}
-          <div className="bg-white rounded-xl p-4 flex items-center justify-between
-                shadow-md transition-all duration-300
-                animate-float">
-            <div className="bg-white rounded-xl p-4 flex items-center justify-between">
+        {activeSection === "home" && (
+          <>
+            {/* HERO BANNER */}
+            <div className="bg-yellow-300 rounded-xl p-8 flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-lg font-bold">Get set & fly to Dubai</h2>
-                <p className="text-sm text-gray-600">Starting ₹7,599</p>
+                <h2 className="text-2xl font-bold">
+                  Get set & fly to Dubai
+                </h2>
+                <p className="text-gray-700">Starting ₹7,599</p>
               </div>
+
               <img
                 src="https://picsum.photos/400/300"
-                className="h-20 object-contain"
+                className="h-24 object-contain"
                 alt="banner"
               />
             </div>
-          </div>
 
-          {/* PRODUCTS GRID */}
-          <div className="w-full px-4 py-4">
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {/* CATEGORY SECTION */}
+            <div className="-mt-20 relative z-10 grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
+
+              {user && (
+                <HomeSection
+                  title="Pick up where you left off"
+                  products={recentlyViewed}
+                />
+              )}
+
+              <HomeSection title="Keep shopping for" />
+
+              {user && (
+                <HomeSection
+                  title="Recommended for you"
+                  products={products}
+                />
+              )}
+
+              {user && (
+                <HomeSection
+                  title="Buy again"
+                  products={products}
+                />
+              )}
+
+            </div>
+
+            {/* PRODUCT GRID */}
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+
               {products.map((product, index) => {
+
                 const discount = product.mrp
                   ? Math.round(((product.mrp - product.price) / product.mrp) * 100)
                   : 0;
@@ -120,24 +131,18 @@ const HomePage = ({ products = [] }) => {
                   <Card
                     key={product._id}
                     onClick={() => navigate(`/product/${product._id}`)}
-                    className="
-    relative rounded-xl cursor-pointer bg-white
-    transition-all duration-300 ease-out
-    hover:-translate-y-2 hover:scale-[1.02]
-    hover:shadow-2xl
-    will-change-transform
-  "
+                    className="relative bg-white cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition"
                   >
+
                     {index < 3 && (
                       <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs px-2 py-1 rounded">
                         #{index + 1} Best Seller
                       </div>
                     )}
 
-                    {/* 👇 Edit button for seller */}
                     {user?.role === "seller" && (
                       <button
-                        className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded hover:bg-blue-700"
+                        className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded"
                         onClick={(e) => {
                           e.stopPropagation();
                           navigate(`/seller/product/edit/${product._id}`);
@@ -154,6 +159,7 @@ const HomePage = ({ products = [] }) => {
                     />
 
                     <CardContent className="space-y-2">
+
                       <p className="font-semibold line-clamp-2 min-h-[40px]">
                         {product.title}
                       </p>
@@ -183,7 +189,7 @@ const HomePage = ({ products = [] }) => {
                       </div>
 
                       {product.mrp && (
-                        <p className="text-green-600 text-sm font-medium">
+                        <p className="text-green-600 text-sm">
                           Save {discount}%
                         </p>
                       )}
@@ -197,48 +203,44 @@ const HomePage = ({ products = [] }) => {
                       >
                         Add to Cart
                       </button>
+
                     </CardContent>
+
                   </Card>
                 );
               })}
+
             </div>
+          </>
+        )}
+
+        {/* ADMIN PANEL */}
+
+        {activeSection === "pending" && user?.role === "admin" && (
+          <div className="p-4">
+            <h2 className="text-xl font-bold mb-4">
+              Pending Product Approvals
+            </h2>
+
+            {pendingProducts.length === 0 ? (
+              <p>No pending products</p>
+            ) : (
+              pendingProducts.map(product => (
+                <div
+                  key={product._id}
+                  className="border p-3 rounded mb-2 bg-white"
+                >
+                  {product.title}
+                </div>
+              ))
+            )}
           </div>
-        </>
-      )}
+        )}
 
-      {/* ================= ADMIN SECTION ================= */}
-      {activeSection === "pending" && user?.role === "admin" && (
-        <div className="p-4">
-          <h2 className="text-xl font-bold mb-4">Pending Product Approvals</h2>
-
-          {pendingProducts.length === 0 ? (
-            <p>No pending products</p>
-          ) : (
-            pendingProducts.map(product => (
-              <div key={product._id} className="border p-3 rounded mb-2">
-                {product.title}
-              </div>
-            ))
-          )}
-        </div>
-      )}
-
-      {/* ================= SELLER SECTION ================= */}
-      {activeSection === "products" && user?.role === "seller" && (
-        <div className="p-4">
-          <h2 className="text-xl font-bold">Seller Products</h2>
-        </div>
-      )}
-
-      {activeSection === "orders" && (
-        <div className="p-4">
-          <h2 className="text-xl font-bold">Orders</h2>
-        </div>
-      )}
+      </div>
 
       <AIShopAssistant />
     </div>
-
   );
 };
 
