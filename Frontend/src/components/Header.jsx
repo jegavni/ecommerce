@@ -18,7 +18,25 @@ const Header = () => {
   const user = useSelector((state) => state.user.user);
   const cartItems = useSelector((state) => state.cart.items);
 
-  // Fetch default address
+  const role = user?.role;
+
+  // Role based menu configuration
+  const roleMenus = {
+    admin: [
+      { label: "Dashboard", path: "/admin/dashboard" },
+      { label: "Manage Products", path: "/adminproduct" },
+      { label: "Manage Orders", path: "/admin/orders" }
+    ],
+    seller: [
+      { label: "Add Product", path: "/addproduct" },
+      { label: "Orders", path: "/seller/orders" }
+    ],
+    customer: [
+      { label: "My Orders", path: "/orders" },
+      { label: "My Addresses", path: "/addresses" }
+    ]
+  };
+
   useEffect(() => {
     if (!user?._id) return;
 
@@ -57,11 +75,13 @@ const Header = () => {
           alignItems: "center",
           gap: 2,
           px: 2,
-          py: 1,
+          py: 1
         }}
       >
-        {/* Menu Icon */}
-        <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: "white" }}>
+        <IconButton
+          onClick={() => setDrawerOpen(true)}
+          sx={{ color: "white" }}
+        >
           <MenuIcon />
         </IconButton>
 
@@ -74,11 +94,11 @@ const Header = () => {
           EasyShop
         </Typography>
 
-        {/* Delivery Address */}
+        {/* Address */}
         {defaultAddress && (
           <Box
             sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-            onClick={() => navigate("/cart")}
+            onClick={() => navigate("/addresses")}
           >
             <LocationOnIcon fontSize="small" sx={{ mr: 0.5 }} />
 
@@ -124,97 +144,73 @@ const Header = () => {
           sx={{ cursor: "pointer", fontWeight: "bold" }}
           onClick={() => navigate("/cart")}
         >
-          🛒 Cart ({cartItems.length})
+          🛒 Cart ({cartItems?.length || 0})
         </Box>
       </Box>
 
       {/* Drawer */}
       <Drawer
-  anchor="left"
-  open={drawerOpen}
-  onClose={() => setDrawerOpen(false)}
->
-  <Box sx={{ width: 300 }}>
+        anchor="left"
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+      >
+        <Box sx={{ width: 300 }}>
 
-    {/* Header */}
-    <Box sx={{ background: "#232F3E", color: "white", p: 2 }}>
-      <Typography variant="h6">
-        {user ? `Hello, ${user.name}` : "Hello, Sign in"}
-      </Typography>
-    </Box>
+          {/* Drawer Header */}
+          <Box sx={{ background: "#232F3E", color: "white", p: 2 }}>
+            <Typography variant="h6">
+              {user ? `Hello, ${user.name}` : "Hello, Sign in"}
+            </Typography>
+          </Box>
 
-    {/* Trending */}
-    <Box sx={{ p: 2 }}>
-      <Typography variant="subtitle1" fontWeight="bold">
-        Trending
-      </Typography>
+          {/* Role Based Menu */}
+          {user && roleMenus[role]?.length > 0 && (
+            <Box sx={{ p: 2 }}>
+              <Typography variant="subtitle1" fontWeight="bold">
+                {role === "admin"
+                  ? "Admin Panel"
+                  : role === "seller"
+                  ? "Seller Center"
+                  : "My Account"}
+              </Typography>
 
-      <Typography sx={{ cursor: "pointer", mt: 1 }}>Bestsellers</Typography>
-      <Typography sx={{ cursor: "pointer" }}>New Releases</Typography>
-      <Typography sx={{ cursor: "pointer" }}>Movers and Shakers</Typography>
-    </Box>
+              {roleMenus[role].map((item) => (
+                <Typography
+                  key={item.label}
+                  sx={{ cursor: "pointer", mt: 1 }}
+                  onClick={() => {
+                    navigate(item.path);
+                    setDrawerOpen(false);
+                  }}
+                >
+                  {item.label}
+                </Typography>
+              ))}
+            </Box>
+          )}
 
-    {/* Digital Content */}
-    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
-      <Typography variant="subtitle1" fontWeight="bold">
-        Digital Content and Devices
-      </Typography>
+          {/* Help & Settings */}
+          <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
+            <Typography variant="subtitle1" fontWeight="bold">
+              Help & Settings
+            </Typography>
 
-      <Typography sx={{ mt: 1 }}>Echo & Alexa</Typography>
-      <Typography>Fire TV</Typography>
-      <Typography>Kindle E-Readers & eBooks</Typography>
-      <Typography>Audible Audiobooks</Typography>
-      <Typography>Prime Video</Typography>
-      <Typography>Prime Music</Typography>
-    </Box>
+            <Typography sx={{ mt: 1, cursor: "pointer" }}>
+              Customer Service
+            </Typography>
 
-    {/* Shop by Category */}
-    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
-      <Typography variant="subtitle1" fontWeight="bold">
-        Shop by Category
-      </Typography>
+            {user && (
+              <Typography
+                sx={{ cursor: "pointer", color: "red" }}
+                onClick={handleLogout}
+              >
+                Sign Out
+              </Typography>
+            )}
+          </Box>
 
-      <Typography sx={{ mt: 1 }}>Mobiles, Computers</Typography>
-      <Typography>TV, Appliances, Electronics</Typography>
-      <Typography>Men's Fashion</Typography>
-      <Typography>Women's Fashion</Typography>
-      <Typography sx={{ color: "#007185" }}>See all</Typography>
-    </Box>
-
-    {/* Programs */}
-    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
-      <Typography variant="subtitle1" fontWeight="bold">
-        Programs & Features
-      </Typography>
-
-      <Typography sx={{ mt: 1 }}>Gift Cards & Mobile Recharges</Typography>
-      <Typography>Amazon Launchpad</Typography>
-      <Typography>Amazon Business</Typography>
-      <Typography>Handloom and Handicrafts</Typography>
-      <Typography sx={{ color: "#007185" }}>See all</Typography>
-    </Box>
-
-    {/* Help */}
-    <Box sx={{ p: 2, borderTop: "1px solid #ddd" }}>
-      <Typography variant="subtitle1" fontWeight="bold">
-        Help & Settings
-      </Typography>
-
-      <Typography sx={{ mt: 1 }}>Your Account</Typography>
-      <Typography>Customer Service</Typography>
-
-      {user && (
-        <Typography
-          sx={{ cursor: "pointer", color: "red" }}
-          onClick={handleLogout}
-        >
-          Sign Out
-        </Typography>
-      )}
-    </Box>
-
-  </Box>
-</Drawer>
+        </Box>
+      </Drawer>
     </>
   );
 };

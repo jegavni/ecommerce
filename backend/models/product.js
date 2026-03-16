@@ -53,8 +53,8 @@ const productSchema = new mongoose.Schema(
     },
 
     specifications: {
-      type: Map,
-      of: String,
+      key :String,
+      value: String,
     },
 
     images: [
