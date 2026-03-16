@@ -96,7 +96,7 @@ export const createProduct = async (req, res) => {
 ===================== */
 export const getMyProducts = async (req, res) => {
   try {
-    const products = await Product.find({ seller: req.user._id });
+    const products = await Product.find({$or: [{ seller: req.user._id }, { seller: {$exists: false} }]});
     res.json(products);
   } catch (error) {
     res.status(500).json({ message: error.message });
