@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { Button } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Container, Typography, Grid, CircularProgress } from "@mui/material";
 import ProductReviewCard from "../components/productReviewCard";
@@ -9,6 +11,7 @@ const AdminProducts = () => {
 
   const user = useSelector((state) => state.user?.user);
   const token = useSelector((state) => state.user?.token);
+  const navigate = useNavigate();
 
   useEffect(() => {
     console.log("ADMIN CHECK:", user, token);
@@ -56,19 +59,30 @@ const AdminProducts = () => {
       )}
 
       <Grid container spacing={3}>
-        {products.map((product) => (
-          <Grid item xs={12} md={4} key={product._id}>
-            <ProductReviewCard
-              product={product}
-              onAction={() =>
-                setProducts((prev) =>
-                  prev.filter((p) => p._id !== product._id)
-                )
-              }
-            />
-          </Grid>
-        ))}
-      </Grid>
+  {products.map((product) => (
+    <Grid item xs={12} md={4} key={product._id}>
+      <ProductReviewCard
+        product={product}
+        onAction={() =>
+          setProducts((prev) =>
+            prev.filter((p) => p._id !== product._id)
+          )
+        }
+      />
+
+      {/* ✅ EDIT BUTTON */}
+      <Button
+        variant="contained"
+        size="small"
+        sx={{ mt: 1 }}
+        onClick={() => navigate(`/admin/product/edit/${product._id}`)}
+      >
+        Edit
+      </Button>
+    </Grid>
+  ))}
+</Grid>
+
     </Container>
   );
 };

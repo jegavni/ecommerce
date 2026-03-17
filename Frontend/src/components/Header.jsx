@@ -24,6 +24,8 @@ const Header = () => {
   const roleMenus = {
     admin: [
       { label: "Dashboard", path: "/admin/dashboard" },
+      { label: "Add Product", path: "/addproduct" },
+
       { label: "Manage Products", path: "/adminproduct" },
       { label: "Manage Orders", path: "/admin/orders" }
     ],
