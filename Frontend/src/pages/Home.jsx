@@ -140,7 +140,7 @@ const HomePage = ({ products = [] }) => {
                       </div>
                     )}
 
-                    {user?.role === "seller" && (
+                   {(user?.role === "seller" || user?.role === "admin") && (
                       <button
                         className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded"
                         onClick={(e) => {
