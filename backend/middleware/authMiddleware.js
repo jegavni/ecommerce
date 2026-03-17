@@ -44,15 +44,17 @@ export const protect = async (req, res, next) => {
 /* =========================
    PROTECT SELLER (Seller Only)
 ========================= */
-export const protectSeller = async (req, res, next) => {
+
+export const protectSellerOrAdmin = async (req, res, next) => {
   try {
-    const authHeader = req.headersauthorization || req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "No token provided" });
     }
 
     const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     const user = await User.findById(decoded.id).select("-password");
@@ -61,13 +63,15 @@ export const protectSeller = async (req, res, next) => {
       return res.status(401).json({ message: "User not found" });
     }
 
-    if (user.role !== "seller") {
-      return res.status(403).json({ message: "Seller access only" });
+    // ✅ Allow both seller & admin
+    if (user.role !== "seller" && user.role !== "admin") {
+      return res.status(403).json({ message: "Access denied (Seller/Admin only)" });
     }
 
     req.user = user;
     next();
   } catch (error) {
+    console.error(error);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
