@@ -18,6 +18,18 @@ const HomePage = ({ products = [] }) => {
   const [pendingProducts, setPendingProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
+  useEffect(() => {
+    axios
+    .get(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`)
+      .then(res => setRecentlyViewed(res.data || []))
+      .catch(console.error);
+  }, [] 
+    );
+
+    const recentlyUpdated = [...products]
+  .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
+  .slice(0, 4);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, token } = useSelector((state) => state.user);
@@ -32,6 +44,7 @@ const HomePage = ({ products = [] }) => {
       .then(setRecentlyViewed)
       .catch(console.error);
   }, []);
+  
 
   /* ================= ADMIN PENDING PRODUCTS ================= */
 
@@ -75,7 +88,7 @@ const HomePage = ({ products = [] }) => {
         {activeSection === "home" && (
           <>
             {/* HERO BANNER */}
-            <div className="bg-yellow-300 rounded-xl p-8 flex items-center justify-between mb-6">
+            <div className="bg-gradient-to-r from-blue-300 via-blue-200 to-transparent rounded-xl p-8 flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-2xl font-bold">
                   Get set & fly to Dubai
@@ -96,7 +109,7 @@ const HomePage = ({ products = [] }) => {
               {user && (
                 <HomeSection
                   title="Pick up where you left off"
-                  products={recentlyViewed}
+                  products={products}
                 />
               )}
 
@@ -105,7 +118,7 @@ const HomePage = ({ products = [] }) => {
               {user && (
                 <HomeSection
                   title="Recommended for you"
-                  products={products}
+                  products={recentlyUpdated}
                 />
               )}
 
