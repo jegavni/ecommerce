@@ -38,6 +38,7 @@ function App() {
   useEffect(() => {
     API.get("/api/products").then((res) => {
       setProducts(res.data.products || []);
+      console.log("Fetched products:", res.data.products);
     });
   }, []);
 

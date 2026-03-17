@@ -134,18 +134,14 @@ export const getProductById = async (req, res) => {
 ===================== */
 export const getApprovedProducts = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 12;
-    const skip = (page - 1) * limit;
-
     // Search
     const keyword = req.query.keyword
       ? {
-        $or: [
-          { title: { $regex: req.query.keyword, $options: "i" } },
-          { description: { $regex: req.query.keyword, $options: "i" } },
-        ],
-      }
+          $or: [
+            { title: { $regex: req.query.keyword, $options: "i" } },
+            { description: { $regex: req.query.keyword, $options: "i" } },
+          ],
+        }
       : {};
 
     // Price filter
@@ -153,24 +149,19 @@ export const getApprovedProducts = async (req, res) => {
     if (req.query.minPrice) priceFilter.$gte = Number(req.query.minPrice);
     if (req.query.maxPrice) priceFilter.$lte = Number(req.query.maxPrice);
 
+    // Final filter
     const filter = {
       status: "approved",
       ...keyword,
       ...(Object.keys(priceFilter).length && { price: priceFilter }),
     };
 
-    const total = await Product.countDocuments(filter);
-
-    const products = await Product.find(filter)
-      .skip(skip)
-      .limit(limit)
-      .sort({ createdAt: -1 });
+    // Get ALL matching products (no skip, no limit)
+    const products = await Product.find(filter).sort({ createdAt: -1 });
 
     res.json({
       products,
-      page,
-      pages: Math.ceil(total / limit),
-      total,
+      total: products.length,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
