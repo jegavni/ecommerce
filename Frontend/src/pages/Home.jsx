@@ -140,17 +140,18 @@ const HomePage = ({ products = [] }) => {
                       </div>
                     )}
 
-                   {(user?.role === "seller" || user?.role === "admin") && (
-                      <button
-                        className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/seller/product/edit/${product._id}`);
-                        }}
-                      >
-                        Edit
-                      </button>
-                    )}
+                    {(user?.role === "admin" ||
+                      (user?.role === "seller" && product.seller === user._id)) && (
+                        <button
+                          className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-3 py-1 rounded"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/seller/product/edit/${product._id}`);
+                          }}
+                        >
+                          Edit
+                        </button>
+                      )}
 
                     <img
                       src={product.images?.[0]?.url || "/placeholder.png"}

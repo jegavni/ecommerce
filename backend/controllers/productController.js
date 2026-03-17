@@ -177,7 +177,13 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (product.seller.toString() !== req.user._id.toString()) {
+    /* ================= AUTH CHECK ================= */
+    const isAdmin = req.user.role === "admin";
+    const isOwner =
+      product.seller &&
+      product.seller.toString() === req.user._id.toString();
+
+    if (!isAdmin && !isOwner) {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
@@ -189,13 +195,11 @@ export const updateProduct = async (req, res) => {
       : [];
 
     if (files.length > 0) {
-      // upload new images → get URLs only
       const imageUrls = await uploadImagesToCloudinary(files, {
         folder: "products",
         publicId: "updated",
       });
 
-      // replace existing images
       product.images = imageUrls;
     }
 
@@ -207,10 +211,18 @@ export const updateProduct = async (req, res) => {
     product.stock = req.body.stock ?? product.stock;
     product.category = req.body.category ?? product.category;
 
-    product.status = "pending";
-    product.rejectionReason = "";
+    /* ================= STATUS LOGIC ================= */
+    if (isAdmin) {
+      // ✅ Admin keeps it approved
+      product.status = req.body.status || product.status;
+    } else {
+      // ❗ Seller → needs re-approval
+      product.status = "pending";
+      product.rejectionReason = "";
+    }
 
     await product.save();
+
     res.json(product);
   } catch (err) {
     console.error("UPDATE PRODUCT ERROR 👉", err);
