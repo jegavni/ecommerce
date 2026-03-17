@@ -187,6 +187,24 @@ export const updateProduct = async (req, res) => {
       return res.status(403).json({ message: "Unauthorized" });
     }
 
+    /* ================= SELLER LOGIC ================= */
+    if (isAdmin) {
+      // ✅ Admin can change seller OR act as seller
+      if (req.body.seller) {
+        product.seller = req.body.seller; // assign new seller
+      } else {
+        // optional: admin becomes seller if needed
+        product.seller = req.user._id;
+      }
+    } else {
+      // ❌ Seller cannot change seller
+      if (req.body.seller) {
+        return res.status(403).json({
+          message: "You cannot change product seller",
+        });
+      }
+    }
+
     /* ================= IMAGE HANDLING ================= */
     const files = req.files?.images
       ? Array.isArray(req.files.images)
@@ -213,10 +231,8 @@ export const updateProduct = async (req, res) => {
 
     /* ================= STATUS LOGIC ================= */
     if (isAdmin) {
-      // ✅ Admin keeps it approved
       product.status = req.body.status || product.status;
     } else {
-      // ❗ Seller → needs re-approval
       product.status = "pending";
       product.rejectionReason = "";
     }
