@@ -16,7 +16,7 @@ import { get } from "mongoose";
 const router = express.Router();
 console.log("Product routes loaded");
 
-router.get("/", getApprovedProducts);
+router.get("/",protect, getApprovedProducts);
 router.get("/:id", getProductById);
 router.post("/createProduct", protect, isSeller, createProduct);
 router.get("/my", protectSellerOrAdmin, isSeller, getMyProducts);
