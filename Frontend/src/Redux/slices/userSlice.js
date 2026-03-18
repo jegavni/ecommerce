@@ -34,9 +34,10 @@ export const getCurrentUser = createAsyncThunk(
         `${import.meta.env.VITE_API_URL}/api/auth/me`,
         { withCredentials: true }
       );
-      return data; // { user }
-    } catch {
-      return rejectWithValue(null);
+      return data;
+    } catch (err) {
+      console.log("AUTH ERROR:", err.response); // 👈 add this
+      return rejectWithValue(err.response?.data || "Unauthorized");
     }
   }
 );
@@ -72,6 +73,7 @@ export const userSlice = createSlice({
     loading: false,
     checkingAuth: false,
     error: null,
+    isAuthenticated: false,
   },
 
   reducers: {
@@ -103,6 +105,7 @@ export const userSlice = createSlice({
         state.loading = false;
         state.user = action.payload.user;
         state.token = action.payload.token;
+        state.isAuthenticated = true;
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -116,10 +119,12 @@ export const userSlice = createSlice({
       .addCase(getCurrentUser.fulfilled, (state, action) => {
         state.checkingAuth = false;
         state.user = action.payload.user || null;
+        state.isAuthenticated = !!action.payload.user;
       })
       .addCase(getCurrentUser.rejected, (state) => {
         state.checkingAuth = false;
         state.user = null;
+        state.isAuthenticated = false;
       })
 
       /* LOGOUT */
@@ -127,6 +132,7 @@ export const userSlice = createSlice({
         state.user = null;
         state.token = null;
         state.error = null;
+        state.isAuthenticated = false;
       });
   },
 });

@@ -8,7 +8,7 @@ const router = express.Router();
 /**
  * GET recently viewed
  */
-router.get("/", protect,recentlyViewedController); 
+router.get("/", protect ,recentlyViewedController); 
 
 /**
  * POST add viewed product

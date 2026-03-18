@@ -34,9 +34,9 @@ function App() {
   /* ===== AUTH CHECK ON APP START ===== */
   const dispatch = useDispatch();
 
-useEffect(() => {
-  dispatch(getCurrentUser());
-}, [dispatch]);
+// useEffect(() => {
+//   dispatch(getCurrentUser());
+// }, [dispatch]);
 
   /* ===== FETCH PRODUCTS ===== */
   useEffect(() => {

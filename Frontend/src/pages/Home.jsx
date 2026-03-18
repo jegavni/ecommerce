@@ -18,12 +18,20 @@ const HomePage = ({ products = [] }) => {
   const [pendingProducts, setPendingProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
 
+  const { user, checkingAuth } = useSelector((state) => state.user);
+
   useEffect(() => {
+    // ⛔ wait until auth check completes
+    if (checkingAuth) return;
+
+    // ⛔ if not logged in → don't call API
+    if (!user) return;
+
     axios
     .get(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`)
       .then(res => setRecentlyViewed(res.data || []))
       .catch(console.error);
-  }, [] 
+  }, [user, checkingAuth] 
     );
 
     const recentlyUpdated = [...products]
@@ -32,18 +40,11 @@ const HomePage = ({ products = [] }) => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { user, token } = useSelector((state) => state.user);
+  const {  token } = useSelector((state) => state.user);
 
   /* ================= FETCH RECENTLY VIEWED ================= */
 
-  useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
-      credentials: "include"
-    })
-      .then(res => res.json())
-      .then(setRecentlyViewed)
-      .catch(console.error);
-  }, []);
+  
   
 
   /* ================= ADMIN PENDING PRODUCTS ================= */

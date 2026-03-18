@@ -5,17 +5,17 @@ const API = axios.create({
   withCredentials: true,
 });
 
-API.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      // Token expired or unauthorized
+// API.interceptors.response.use(
+//   (response) => response,
+//   (error) => {
+//     if (error.response && error.response.status === 401) {
+//       // Token expired or unauthorized
 
-      // Redirect to login page
-      window.location.href = "/login";
-    }
-    return Promise.reject(error);
-  }
-);
+//       // Redirect to login page
+//       window.location.href = "/login";
+//     }
+//     return Promise.reject(error);
+//   }
+// );
 
 export default API;

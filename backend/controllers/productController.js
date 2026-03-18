@@ -148,7 +148,9 @@ export const getApprovedProducts = async (req, res) => {
     const priceFilter = {};
     if (req.query.minPrice) priceFilter.$gte = Number(req.query.minPrice);
     if (req.query.maxPrice) priceFilter.$lte = Number(req.query.maxPrice);
-
+if (req.query.category && req.query.category !== "all") {
+  filter.category = req.query.category;
+}
     // Final filter
     const filter = {
       status: "approved",

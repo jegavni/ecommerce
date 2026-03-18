@@ -1,36 +1,54 @@
-import { useMemo, useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { addToCart } from "../Redux/slices/cartSlice";
 import { toast } from "react-toastify";
 import { Card, CardContent } from "@/components/ui/card.tsx";
+import API from "../api/axios";
 
-const SearchPage = ({ products = [] }) => {
+const SearchPage = () => {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.user);
 
-  const query = params.get("q") || "";
+  const keyword = params.get("keyword") || "";
+  const category = params.get("category") || "all";
 
+  const [results, setResults] = useState([]);
   const [sort, setSort] = useState("default");
   const [maxPrice, setMaxPrice] = useState("");
 
-  const results = useMemo(() => {
-    let filtered = products.filter((p) =>
-      p.title?.toLowerCase().includes(query.toLowerCase())
-    );
+  /* 🔥 FETCH FROM BACKEND */
+  useEffect(() => {
+    const fetchSearch = async () => {
+      try {
+        const res = await API.get(
+          `/api/products?keyword=${keyword}&category=${category}`
+        );
 
-    if (maxPrice) {
-      filtered = filtered.filter((p) => p.price <= Number(maxPrice));
-    }
+        let data = res.data.products || [];
 
-    if (sort === "low") filtered.sort((a, b) => a.price - b.price);
-    if (sort === "high") filtered.sort((a, b) => b.price - a.price);
+        // 💰 Price filter
+        if (maxPrice) {
+          data = data.filter((p) => p.price <= Number(maxPrice));
+        }
 
-    return filtered;
-  }, [query, products, sort, maxPrice]);
+        // 🔽 Sorting
+        if (sort === "low") data.sort((a, b) => a.price - b.price);
+        if (sort === "high") data.sort((a, b) => b.price - a.price);
 
+        setResults(data);
+      } catch (err) {
+        console.error("Search error:", err);
+        setResults([]);
+      }
+    };
+
+    fetchSearch();
+  }, [keyword, category, sort, maxPrice]);
+
+  /* 🛒 ADD TO CART */
   const handleAddToCart = (product) => {
     if (!user) {
       toast.info("Please login first");
@@ -41,10 +59,14 @@ const SearchPage = ({ products = [] }) => {
     toast.success("Added to cart");
   };
 
+  /* 🔍 HIGHLIGHT TEXT */
   const highlightText = (text) => {
-    const parts = text.split(new RegExp(`(${query})`, "gi"));
+    if (!keyword.trim()) return text;
+
+    const parts = text.split(new RegExp(`(${keyword})`, "gi"));
+
     return parts.map((part, i) =>
-      part.toLowerCase() === query.toLowerCase() ? (
+      part.toLowerCase() === keyword.toLowerCase() ? (
         <span key={i} className="bg-green-200">{part}</span>
       ) : (
         part
@@ -55,7 +77,8 @@ const SearchPage = ({ products = [] }) => {
   return (
     <div className="p-4">
       <h2 className="text-xl font-bold mb-4">
-        Results for "{query}"
+        Results for "{keyword}"{" "}
+        {category !== "all" && `in ${category}`}
       </h2>
 
       {/* FILTER BAR */}
@@ -79,6 +102,7 @@ const SearchPage = ({ products = [] }) => {
         />
       </div>
 
+      {/* RESULTS */}
       {results.length === 0 ? (
         <div className="text-yellow-500 text-center mt-10">
           No products found 😔
@@ -88,8 +112,7 @@ const SearchPage = ({ products = [] }) => {
           {results.map((product) => (
             <Card
               key={product._id}
-              
-              className="rounded-xl  cursor-pointer hover:shadow-lg transition bg-white"
+              className="rounded-xl cursor-pointer hover:shadow-lg transition bg-white"
               onClick={() => navigate(`/product/${product._id}`)}
             >
               <img
@@ -102,6 +125,7 @@ const SearchPage = ({ products = [] }) => {
                 <p className="font-semibold truncate">
                   {highlightText(product.title)}
                 </p>
+
                 <p className="text-green-600 font-bold">
                   ₹{product.price}
                 </p>
