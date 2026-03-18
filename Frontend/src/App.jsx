@@ -1,8 +1,8 @@
 import { Routes, Route } from "react-router-dom";
+import { getCurrentUser } from "./Redux/slices/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 
-import { getCurrentUser } from "./Redux/slices/userSlice";
 
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -32,7 +32,11 @@ function App() {
   const [products, setProducts] = useState([]);
 
   /* ===== AUTH CHECK ON APP START ===== */
-  
+  const dispatch = useDispatch();
+
+useEffect(() => {
+  dispatch(getCurrentUser());
+}, [dispatch]);
 
   /* ===== FETCH PRODUCTS ===== */
   useEffect(() => {
