@@ -8,39 +8,48 @@ import { Rating } from "@mui/material";
 import Header from "../components/Header";
 import { HomeSection } from "../components/HomeSection";
 import AIShopAssistant from "../components/AIShopAssistant";
-
+import { logoutUser } from "../Redux/slices/userSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import { addToCart } from "../Redux/slices/cartSlice";
+
 
 const HomePage = ({ products = [] }) => {
 
   const [activeSection, setActiveSection] = useState("home");
   const [pendingProducts, setPendingProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-
-  const { user, checkingAuth } = useSelector((state) => state.user);
-
-  useEffect(() => {
-    // ⛔ wait until auth check completes
-    if (checkingAuth) return;
-
-    // ⛔ if not logged in → don't call API
-    if (!user) return;
-
-    axios
-    .get(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`)
-      .then(res => setRecentlyViewed(res.data || []))
-      .catch(console.error);
-  }, [user, checkingAuth] 
-    );
-
-    const recentlyUpdated = [...products]
-  .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))
-  .slice(0, 4);
-
-  const dispatch = useDispatch();
+const dispatch = useDispatch();
   const navigate = useNavigate();
   const {  token } = useSelector((state) => state.user);
+  const { user, checkingAuth } = useSelector((state) => state.user);
+
+ useEffect(() => {
+  if (!token|| !user) {
+    dispatch(logoutUser());
+    return;
+  }
+
+ axios
+  .get(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+  .then((res) => {
+    setRecentlyViewed(res.data);
+  })
+  .catch((err) => {
+    if (err.response?.status === 401) {
+      dispatch(logoutUser());
+      navigate("/login");
+    }
+  });
+
+}, [token]);
+
+    
+
+  
 
   /* ================= FETCH RECENTLY VIEWED ================= */
 
@@ -107,26 +116,26 @@ const HomePage = ({ products = [] }) => {
             {/* CATEGORY SECTION */}
             <div className="-mt-20 relative z-10 grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
 
-              {user && (
+              {user &&  recentlyViewed.length > 0 && (
                 <HomeSection
                   title="Pick up where you left off"
-                  products={products}
+                  products={recentlyViewed}
                 />
               )}
 
               <HomeSection title="Keep shopping for" />
 
-              {user && (
+              {user  && (
                 <HomeSection
                   title="Recommended for you"
-                  products={recentlyUpdated}
+                  products={products}
                 />
               )}
 
-              {user && (
+              {user &&  recentlyViewed.length > 0 && (
                 <HomeSection
                   title="Buy again"
-                  products={products}
+                  products={recentlyViewed}
                 />
               )}
 
