@@ -20,7 +20,7 @@ const ResetPassword = () => {
       toast.success("✅ Password reset successful");
       navigate("/login");
     } catch (err) {
-      toast.error("❌ Invalid or expired link");
+      toast.error(" Invalid or expired link");
     }
   };
 

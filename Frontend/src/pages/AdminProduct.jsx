@@ -55,7 +55,7 @@ const AdminProducts = () => {
       </Typography>
 
       {products.length === 0 && (
-        <Typography>No pending products 🎉</Typography>
+        <Typography>No pending products </Typography>
       )}
 
       <Grid container spacing={3}>
@@ -70,7 +70,7 @@ const AdminProducts = () => {
         }
       />
 
-      {/* ✅ EDIT BUTTON */}
+      {/* EDIT BUTTON */}
       <Button
         variant="contained"
         size="small"

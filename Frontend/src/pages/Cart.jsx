@@ -72,7 +72,7 @@ const Cart = () => {
 
         setSelectedAddress(defaultAddress);
       } catch (err) {
-        toast.error("❌ Failed to load addresses");
+        toast.error(" Failed to load addresses");
       } finally {
         setLoadingAddresses(false);
       }
@@ -111,9 +111,9 @@ const Cart = () => {
      ONLINE PAYMENT
   ========================== */
   const makePayment = async () => {
-    if (!user) return toast.error("❌ Please login");
+    if (!user) return toast.error(" Please login");
     if (!selectedAddress)
-      return toast.error("❌ Please select delivery address");
+      return toast.error(" Please select delivery address");
 
     try {
       const { data } = await axios.post(
@@ -134,7 +134,7 @@ const Cart = () => {
             razorpayPaymentId: response.razorpay_payment_id,
           });
 
-          toast.success("🎉 Payment Successful & Order Placed!");
+          toast.success(" Payment Successful & Order Placed!");
         },
 
         prefill: {
@@ -150,16 +150,16 @@ const Cart = () => {
       const rzp = new window.Razorpay(options);
 
       rzp.on("payment.failed", function () {
-        toast.error("❌ Payment failed");
+        toast.error("Payment failed");
       });
 
       rzp.on("modal.closed", function () {
-        toast.error("❌ Payment cancelled");
+        toast.error(" Payment cancelled");
       });
 
       rzp.open();
     } catch (err) {
-      toast.error("❌ Payment initialization failed");
+      toast.error(" Payment initialization failed");
     }
   };
 
@@ -167,9 +167,9 @@ const Cart = () => {
      CASH ON DELIVERY
   ========================== */
   const placeCODOrder = async () => {
-    if (!user) return toast.error("❌ Please login");
+    if (!user) return toast.error(" Please login");
     if (!selectedAddress)
-      return toast.error("❌ Please select delivery address");
+      return toast.error(" Please select delivery address");
 
     try {
       await saveOrder({
@@ -177,9 +177,9 @@ const Cart = () => {
         paymentStatus: "PENDING",
       });
 
-      toast.success("🎉 Order placed with Cash on Delivery!");
+      toast.success(" Order placed with Cash on Delivery!");
     } catch (err) {
-      toast.error("❌ Failed to place order");
+      toast.error(" Failed to place order");
     }
   };
 
@@ -200,18 +200,18 @@ const Cart = () => {
           `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses/${editingAddress._id}`,
           addressData
         );
-        toast.success("✅ Address updated");
+        toast.success(" Address updated");
       } else {
         res = await axios.post(
           `${import.meta.env.VITE_API_URL}/api/users/${user._id}/addresses`,
           addressData
         );
-        toast.success("✅ Address added");
+        toast.success(" Address added");
       }
 
       setAddresses(res.data.addresses);
     } catch (err) {
-      toast.error("❌ Failed to save address");
+      toast.error(" Failed to save address");
     } finally {
       setOpenAddressModal(false);
       setEditingAddress(null);

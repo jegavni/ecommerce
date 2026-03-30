@@ -13,7 +13,7 @@ const ForgotPassword = () => {
       await axios.post(`${import.meta.env.VITE_API_URL}/api/forget/forgot-password`, {
         email,
       });
-      toast.success("📩 Reset link sent to email");
+      toast.success(" Reset link sent to email");
     } catch (err) {
       toast.error(err.response?.data?.message || "Error");
     }

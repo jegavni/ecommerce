@@ -23,23 +23,23 @@ const Login = () => {
 
   const { loading, error, user } = useSelector((state) => state.user);
 
-  // ✅ Reset state when page loads
+  //  Reset state when page loads
   useEffect(() => {
     dispatch(resetAuthState());
   }, [dispatch]);
 
-  // ✅ Handle login submit
+  //  Handle login submit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!form.email || !form.password) {
-      toast.error("❌ Please fill all fields");
+      toast.error(" Please fill all fields");
       return;
     }
 
     try {
       await dispatch(loginUser(form)).unwrap();
-      toast.success("✅ Login successful");
+      toast.success(" Login successful");
       navigate("/");
     } catch (err) {
       toast.error(err || "Login failed");
@@ -51,7 +51,7 @@ const Login = () => {
       <Card sx={{ p: 2 }}>
         <CardContent>
           <Typography variant="h4" textAlign="center" mb={3} color="primary">
-            🔐 Login
+             Login
           </Typography>
 
           <Box component="form" onSubmit={handleSubmit}>

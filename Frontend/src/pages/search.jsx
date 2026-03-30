@@ -19,7 +19,7 @@ const SearchPage = () => {
   const [sort, setSort] = useState("default");
   const [maxPrice, setMaxPrice] = useState("");
 
-  /* 🔥 FETCH FROM BACKEND */
+  /*  FETCH FROM BACKEND */
   useEffect(() => {
     const fetchSearch = async () => {
       try {
@@ -29,12 +29,12 @@ const SearchPage = () => {
 
         let data = res.data.products || [];
 
-        // 💰 Price filter
+        //  Price filter
         if (maxPrice) {
           data = data.filter((p) => p.price <= Number(maxPrice));
         }
 
-        // 🔽 Sorting
+        //  Sorting
         if (sort === "low") data.sort((a, b) => a.price - b.price);
         if (sort === "high") data.sort((a, b) => b.price - a.price);
 
@@ -48,7 +48,7 @@ const SearchPage = () => {
     fetchSearch();
   }, [keyword, category, sort, maxPrice]);
 
-  /* 🛒 ADD TO CART */
+  /*  ADD TO CART */
   const handleAddToCart = (product) => {
     if (!user) {
       toast.info("Please login first");
@@ -59,7 +59,7 @@ const SearchPage = () => {
     toast.success("Added to cart");
   };
 
-  /* 🔍 HIGHLIGHT TEXT */
+  /*  HIGHLIGHT TEXT */
   const highlightText = (text) => {
     if (!keyword.trim()) return text;
 
@@ -105,7 +105,7 @@ const SearchPage = () => {
       {/* RESULTS */}
       {results.length === 0 ? (
         <div className="text-yellow-500 text-center mt-10">
-          No products found 😔
+          No products found 
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

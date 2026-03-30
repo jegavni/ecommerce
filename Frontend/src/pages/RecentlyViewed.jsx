@@ -9,10 +9,10 @@ const RecentlyViewedPage = () => {
   const { user, checkingAuth } = useSelector((state) => state.user);
 
   useEffect(() => {
-    // ⛔ Wait until auth check completes
+    //  Wait until auth check completes
     if (checkingAuth) return;
 
-    // ⛔ If not logged in → don't call API
+    //  If not logged in → don't call API
     if (!user) return;
 
     fetch(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
@@ -20,7 +20,7 @@ const RecentlyViewedPage = () => {
     })
       .then((res) => {
         if (res.status === 401) {
-          return []; // ⛔ prevent crash
+          return []; //  prevent crash
         }
         return res.json();
       })
@@ -28,10 +28,10 @@ const RecentlyViewedPage = () => {
       .catch(console.error);
   }, [user, checkingAuth]);
 
-  // ⛔ While checking auth → don't render
+  //  While checking auth → don't render
   if (checkingAuth) return null;
 
-  // ⛔ If not logged in → hide page completely
+  //  If not logged in → hide page completely
   if (!user) return null;
 
   return (

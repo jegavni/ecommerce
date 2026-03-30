@@ -1,8 +1,6 @@
 import User from "../models/user.js";
 
-/* =========================
-   GET ALL ADDRESSES
-========================= */
+/*GET ALL ADDRESSES*/
 
 export const getAddresses = async (req, res) => {
     console.log("GET /api/users/:userId/addresses called");
@@ -19,10 +17,8 @@ export const getAddresses = async (req, res) => {
   }
 };
 
-/* =========================
-   ADD ADDRESS
-========================= */
-
+/* ADD ADDRESS */
+ 
 export const addAddress = async (req, res) => {
   try {
     const user = await User.findById(req.params.userId);
@@ -68,9 +64,7 @@ export const addAddress = async (req, res) => {
   }
 };
 
-/* =========================
-   UPDATE ADDRESS
-========================= */
+/* UPDATE ADDRESS */
 
 export const updateAddress = async (req, res) => {
   try {
@@ -105,9 +99,7 @@ export const updateAddress = async (req, res) => {
   }
 };
 
-/* =========================
-   SET DEFAULT ADDRESS
-========================= */
+  //  SET DEFAULT ADDRESS
 
 export const setDefaultAddress = async (req, res) => {
   try {

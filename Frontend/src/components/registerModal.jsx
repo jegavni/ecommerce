@@ -49,14 +49,14 @@ const RegisterModal = ({ open, onClose }) => {
     setLoading(true);
 
     try {
-      // ✅ Register user
+      // Register user
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/register`,
         form,
         { withCredentials: true }
       );
 
-      // ✅ Auto login
+      //  Auto login
       const result = await dispatch(
         loginUser({
           email: form.email,
@@ -73,7 +73,7 @@ const RegisterModal = ({ open, onClose }) => {
 
     } catch (err) {
       toast.error(
-        err.response?.data?.message || "❌ Registration failed"
+        err.response?.data?.message || " Registration failed"
       );
     } finally {
       setLoading(false);

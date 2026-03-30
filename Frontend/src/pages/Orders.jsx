@@ -48,14 +48,14 @@ const Orders = () => {
   return (
     <Container sx={{ mt: 4 }}>
       <Typography variant="h4" mb={3}>
-        📦 My Orders
+         My Orders
       </Typography>
 
     
 
       {orders.length === 0 && (
         <Typography align="center" mt={5}>
-          🛒 You haven’t placed any orders yet
+           You haven’t placed any orders yet
         </Typography>
       )}
 

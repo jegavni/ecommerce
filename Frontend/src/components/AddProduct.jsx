@@ -88,18 +88,18 @@ const removeExistingImage = (index) => {
         formData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      toast.success("Product updated successfully ✅");
+      toast.success("Product updated successfully ");
     } else {
       await axios.post(
         `${import.meta.env.VITE_API_URL}/api/products/createProduct`,
         formData,
         { withCredentials: true }
       );
-      toast.success("Product added successfully ✅");
+      toast.success("Product added successfully ");
     }
     navigate("/");
   } catch (err) {
-    toast.error(err.response?.data?.message || "Failed ❌");
+    toast.error(err.response?.data?.message || "Failed ");
   }
 };
 
@@ -114,10 +114,10 @@ const removeExistingImage = (index) => {
         const res = await axios.get(
           `${import.meta.env.VITE_API_URL}/api/products/${id}`
         );
-        console.log("Fetched product for edit 👉", res.data);
+        console.log("Fetched product for edit ", res.data);
         const p = res.data?.product || res.data || {};
 
-        console.log("Fetched product for edit 👉", p);
+        console.log("Fetched product for edit ", p);
 
         setForm({
           title: p.title || "",

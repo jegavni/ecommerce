@@ -18,43 +18,59 @@ const HomePage = ({ products = [] }) => {
   const [activeSection, setActiveSection] = useState("home");
   const [pendingProducts, setPendingProducts] = useState([]);
   const [recentlyViewed, setRecentlyViewed] = useState([]);
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
   const navigate = useNavigate();
-  const {  token } = useSelector((state) => state.user);
-  const { user, checkingAuth } = useSelector((state) => state.user);
-
- useEffect(() => {
-  if (!token|| !user) {
-    dispatch(logoutUser());
-    return;
-  }
-
- axios
-  .get(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-  .then((res) => {
-    setRecentlyViewed(res.data);
-  })
-  .catch((err) => {
-    if (err.response?.status === 401) {
+  const { token } = useSelector((state) => state.user);
+  const { user } = useSelector((state) => state.user);
+  const [hoveredProduct, setHoveredProduct] = useState(null);
+  const [imageIndex, setImageIndex] = useState(0);
+  useEffect(() => {
+    if (!token || !user) {
       dispatch(logoutUser());
-      navigate("/login");
+      return;
     }
-  });
 
-}, [token]);
+    axios
+      .get(`${import.meta.env.VITE_API_URL}/api/recentlyViewed`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      .then((res) => {
+        setRecentlyViewed(res.data);
+      })
+      .catch((err) => {
+        if (err.response?.status === 401) {
+          dispatch(logoutUser());
+          navigate("/login");
+        }
+      });
 
-    
+  }, [token]);
 
-  
+  useEffect(() => {
+    let interval;
+
+    if (hoveredProduct) {
+      const product = products.find(p => p._id === hoveredProduct);
+
+      if (product?.images?.length > 1) {
+        interval = setInterval(() => {
+          setImageIndex((prev) => (prev + 1) % product.images.length);
+        }, 1000); // speed
+      }
+    }
+
+    return () => clearInterval(interval);
+  }, [hoveredProduct, products]);
+
+
+
 
   /* ================= FETCH RECENTLY VIEWED ================= */
 
-  
-  
+
+
 
   /* ================= ADMIN PENDING PRODUCTS ================= */
 
@@ -116,7 +132,7 @@ const dispatch = useDispatch();
             {/* CATEGORY SECTION */}
             <div className="-mt-20 relative z-10 grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
 
-              {user &&  recentlyViewed.length > 0 && (
+              {user && recentlyViewed.length > 0 && (
                 <HomeSection
                   title="Pick up where you left off"
                   products={recentlyViewed}
@@ -125,14 +141,14 @@ const dispatch = useDispatch();
 
               <HomeSection title="Keep shopping for" />
 
-              {user  && (
+              {user && (
                 <HomeSection
                   title="Recommended for you"
                   products={products}
                 />
               )}
 
-              {user &&  recentlyViewed.length > 0 && (
+              {user && recentlyViewed.length > 0 && (
                 <HomeSection
                   title="Buy again"
                   products={recentlyViewed}
@@ -154,6 +170,14 @@ const dispatch = useDispatch();
                   <Card
                     key={product._id}
                     onClick={() => navigate(`/product/${product._id}`)}
+                    onMouseEnter={() => {
+                      setHoveredProduct(product._id);
+                      setImageIndex(0);
+                    }}
+                    onMouseLeave={() => {
+                      setHoveredProduct(null);
+                      setImageIndex(0);
+                    }}
                     className="relative bg-white cursor-pointer hover:shadow-2xl hover:-translate-y-1 transition"
                   >
 
@@ -177,8 +201,12 @@ const dispatch = useDispatch();
                       )}
 
                     <img
-                      src={product.images?.[0]?.url || "/placeholder.png"}
-                      className="h-44 w-full object-contain p-3"
+                      src={
+                        hoveredProduct === product._id
+                          ? product.images?.[imageIndex]?.url
+                          : product.images?.[0]?.url
+                      }
+                      className="h-44 w-full object-contain p-3 transition-all duration-500"
                       alt={product.title}
                     />
 

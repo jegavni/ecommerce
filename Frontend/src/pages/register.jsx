@@ -109,7 +109,7 @@ const Register = () => {
     e.preventDefault();
 
     if (!validateForm()) {
-      toast.error("❌ Please fix errors before submitting");
+      toast.error(" Please fix errors before submitting");
       return;
     }
 
@@ -123,7 +123,7 @@ const Register = () => {
         { withCredentials: true }
       );
 
-      // ✅ Auto login using Redux
+      //  Auto login using Redux
       const result = await dispatch(
         loginUser({
           email: form.email,
@@ -141,7 +141,7 @@ const Register = () => {
 
     } catch (err) {
       toast.error(
-        err.response?.data?.message || "❌ Registration failed"
+        err.response?.data?.message || " Registration failed"
       );
     } finally {
       setLoading(false);

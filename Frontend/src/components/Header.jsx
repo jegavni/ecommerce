@@ -29,7 +29,7 @@ const Header = () => {
   const handleSearch = () => {
     const trimmed = searchTerm.trim();
 
-    if (!trimmed && category === "all") return; // ❌ avoid empty search
+    if (!trimmed && category === "all") return; //  avoid empty search
 
     const query = new URLSearchParams();
 
@@ -39,7 +39,7 @@ const Header = () => {
     navigate(`/search?${query.toString()}`);
   };
 
-  /* 📍 FETCH DEFAULT ADDRESS */
+  /* FETCH DEFAULT ADDRESS */
   useEffect(() => {
     if (!user?._id) return;
 
@@ -63,13 +63,13 @@ const Header = () => {
     fetchDefaultAddress();
   }, [user?._id]);
 
-  /* 🚪 LOGOUT */
+  /* LOGOUT */
   const handleLogout = async () => {
     await dispatch(logoutUser());
     navigate("/login");
   };
 
-  /* 📂 ROLE MENUS */
+  /*  ROLE MENUS */
   const roleMenus = {
     admin: [
       { label: "Dashboard", path: "/admin/dashboard" },
@@ -133,7 +133,7 @@ const Header = () => {
 
 
 
-        {/* 🔍 SEARCH BAR (shadcn styled) */}
+        {/*  SEARCH BAR (shadcn styled) */}
         <Box
           sx={{
             display: "flex",
@@ -170,7 +170,7 @@ const Header = () => {
           >
             🔍
           </Button>
-        </Box>>
+        </Box>
 
         <Box sx={{ flex: 1 }} />
 

@@ -18,7 +18,7 @@ const SellerForm = () => {
     phone: "",
   });
 
-  /* ✅ Redirect safely */
+  /* Redirect safely */
   useEffect(() => {
     if (!user) navigate("/login");
     if (user?.role === "seller") navigate("/seller/dashboard");
@@ -34,7 +34,7 @@ const SellerForm = () => {
         { withCredentials: true }
       );
 
-      // 🔥 UPDATE REDUX USER
+      //  UPDATE REDUX USER
       dispatch(setUser(res.data.user));
 
       toast.success("Welcome Seller 🎉");

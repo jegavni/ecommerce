@@ -44,7 +44,7 @@ const AIShopAssistant = () => {
         onClick={() => setOpen(!open)}
         className="fixed bottom-5 right-5 bg-black text-white px-4 py-3 rounded-full shadow-lg"
       >
-        🤖 AI Help
+         AI Help
       </button>
 
       {/* Chat Window */}

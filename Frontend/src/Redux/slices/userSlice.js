@@ -77,7 +77,7 @@ export const userSlice = createSlice({
   },
 
   reducers: {
-    /* ✅ ADD THIS */
+    /*  ADD THIS */
     setUser: (state, action) => {
       state.user = action.payload;
     },
