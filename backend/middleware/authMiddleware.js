@@ -47,13 +47,21 @@ export const protect = async (req, res, next) => {
 
 export const protectSellerOrAdmin = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
+    let token = null;
 
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token provided" });
+    // 1️⃣ Check Authorization header
+    if (req.headers.authorization?.startsWith("Bearer ")) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
-    const token = authHeader.split(" ")[1];
+    // 2️⃣ Check cookie
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
@@ -71,7 +79,6 @@ export const protectSellerOrAdmin = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    
     console.error(error);
     return res.status(401).json({ message: "Invalid or expired token" });
   }

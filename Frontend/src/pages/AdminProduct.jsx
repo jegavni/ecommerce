@@ -49,8 +49,8 @@ const AdminProducts = () => {
   if (loading) return <CircularProgress />;
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>
+    <Container sx={{ mt: { xs: 2, sm: 4 }, mb: 8, px: { xs: 1.5, sm: 3 } }}>
+      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
         Pending Product Approvals
       </Typography>
 
@@ -60,7 +60,7 @@ const AdminProducts = () => {
 
       <Grid container spacing={3}>
   {products.map((product) => (
-    <Grid item xs={12} md={4} key={product._id}>
+    <Grid item xs={12} sm={6} md={4} key={product._id}>
       <ProductReviewCard
         product={product}
         onAction={() =>

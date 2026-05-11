@@ -42,10 +42,10 @@ const fetchMyProducts = async () => {
   if (loading) return <CircularProgress />;
 
   return (
-    <Container sx={{ mt: 4 }}>
+    <Container sx={{ mt: { xs: 2, sm: 4 }, mb: 8, px: { xs: 1.5, sm: 3 } }}>
       {products.length > 0 ? (
         <>
-          <Typography variant="h4" gutterBottom>
+          <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold" }}>
             My Products
           </Typography>
           <Grid container spacing={3}>
@@ -53,7 +53,7 @@ const fetchMyProducts = async () => {
               .filter(p => p && p._id)
               .map((product) => (
 
-                <Grid item xs={12} md={4} key={product._id}>
+                <Grid item xs={12} sm={6} md={4} key={product._id}>
                   <SellerProductCard product={product} />
                 </Grid>
               ))}

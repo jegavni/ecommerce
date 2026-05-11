@@ -27,6 +27,10 @@
 /frontend/.vscode/
 /frontend/.DS_Store
 /frontend/Thumbs.db
+/frontend/.env.development
+/frontend/.env.production
+/backend/.env
+
 
 # ========================
 # Optional / Misc
@@ -34,3 +38,4 @@
 # Temporary files
 *.log
 *.tmp
+

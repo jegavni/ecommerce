@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,6 +14,7 @@ import {
 
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { toast } from "react-toastify";
+import PriceComparePanel from "../components/PriceComparePanel";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -26,6 +27,12 @@ const ProductDetails = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
   const [similarProducts, setSimilarProducts] = useState([]);
+
+  /* ================= PRICE COMPARE STATE ================= */
+  const [compareOpen, setCompareOpen]     = useState(false);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareData, setCompareData]     = useState(null);
+  const [compareError, setCompareError]   = useState(null);
 
   /* ================= FETCH PRODUCT ================= */
   useEffect(() => {
@@ -90,6 +97,35 @@ const ProductDetails = () => {
     toast.success("Added to cart");
   };
 
+  /* ================= COMPARE PRICES ================= */
+  const handleComparePrice = useCallback(async () => {
+    if (!product) return;
+    setCompareOpen(true);
+    setCompareLoading(true);
+    setCompareData(null);
+    setCompareError(null);
+
+    try {
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/ai/compare-price`,
+        {
+          productName: product.title,
+          price:       product.price,
+          category:    product.category || "",
+          brand:       product.brand    || "",
+        }
+      );
+      setCompareData(data);
+    } catch (err) {
+      setCompareError(
+        err?.response?.data?.message ||
+        "Price comparison failed. Please try again."
+      );
+    } finally {
+      setCompareLoading(false);
+    }
+  }, [product]);
+
   /* ================= DELETE PRODUCT ================= */
   const handleDelete = (id) => {
   toast(
@@ -146,8 +182,9 @@ const ProductDetails = () => {
   if (!product) return null;
 
   return (
-    <Container sx={{ mt: 4, mb: 10 }}>
-      <Grid container spacing={5}>
+    <>
+    <Container sx={{ mt: { xs: 2, sm: 4 }, mb: 10, px: { xs: 1.5, sm: 3 } }}>
+      <Grid container spacing={{ xs: 3, md: 5 }}>
         {/* IMAGE SECTION */}
         <Grid item xs={12} md={6}>
           <div className="bg-white rounded-2xl p-6 shadow-sm relative">
@@ -299,15 +336,51 @@ const ProductDetails = () => {
               Buy Now
             </Button>
           </div>
+
+          {/* COMPARE PRICES BUTTON */}
+          <button
+            onClick={handleComparePrice}
+            id="compare-prices-btn"
+            style={{
+              marginTop: 16,
+              width: "100%",
+              padding: "13px 20px",
+              background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)",
+              color: "#fff",
+              border: "none",
+              borderRadius: 12,
+              fontWeight: 700,
+              fontSize: 15,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 8,
+              boxShadow: "0 4px 15px rgba(99,102,241,0.35)",
+              transition: "transform 0.15s ease, box-shadow 0.15s ease",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-2px)";
+              e.currentTarget.style.boxShadow = "0 6px 20px rgba(99,102,241,0.45)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.boxShadow = "0 4px 15px rgba(99,102,241,0.35)";
+            }}
+          >
+            🔍 Compare Prices on Other Sites
+          </button>
         </Grid>
       </Grid>
 
       {/* SIMILAR PRODUCTS */}
       {similarProducts.length > 0 && (
         <div className="mt-10">
-          <Typography variant="h6">Similar Products</Typography>
+          <Typography variant="h6" mb={2} sx={{ fontWeight: "bold" }}>
+            Similar Products
+          </Typography>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
             {similarProducts.map((item) => (
               <div
                 key={item._id}
@@ -326,6 +399,18 @@ const ProductDetails = () => {
         </div>
       )}
     </Container>
+
+      {/* PRICE COMPARE PANEL */}
+      {compareOpen && (
+        <PriceComparePanel
+          product={product}
+          onClose={() => setCompareOpen(false)}
+          data={compareData}
+          loading={compareLoading}
+          error={compareError}
+        />
+      )}
+    </>
   );
 };
 

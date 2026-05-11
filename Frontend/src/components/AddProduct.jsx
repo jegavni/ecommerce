@@ -166,14 +166,16 @@ const removeExistingImage = (index) => {
       sx={{
         maxWidth: 650,
         mx: "auto",
-        p: 3,
-        mt: 3,
-        boxShadow: 3,
+        p: { xs: 2, sm: 3 },
+        mt: { xs: 2, sm: 4 },
+        mb: 8,
+        boxShadow: { xs: 0, sm: 3 },
+        border: { xs: "none", sm: "1px solid #e2e8f0" },
         borderRadius: 2,
         bgcolor: "#fff",
       }}
     >
-      <Typography variant="h5" fontWeight="bold" mb={2}>
+      <Typography variant="h5" fontWeight="bold" mb={2} sx={{ fontSize: { xs: "1.25rem", sm: "1.5rem" } }}>
         {isEditMode ? "Edit Product" : "Add Product"}
       </Typography>
 
@@ -212,7 +214,7 @@ const removeExistingImage = (index) => {
     {existingImages.map((src, i) => (
       <div key={i} style={{ position: "relative" }}>
         <img
-          src={src}
+          src={src?.url || src}
           alt=""
           style={{ height: 250, objectFit: "cover", borderRadius: 8 }}
         />

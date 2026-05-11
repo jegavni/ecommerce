@@ -13,6 +13,7 @@ import {
   Grid,
   Box,
   Button,
+  Divider,
 } from "@mui/material";
 
 import AddIcon from "@mui/icons-material/Add";
@@ -128,13 +129,29 @@ const Cart = () => {
         order_id: data.order.id,
 
         handler: async function (response) {
-          await saveOrder({
-            paymentMethod: "Razorpay",
-            paymentStatus: "PAID",
-            razorpayPaymentId: response.razorpay_payment_id,
-          });
+          try {
+            const verifyRes = await axios.post(
+              `${import.meta.env.VITE_API_URL}/api/payment/verify`,
+              {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }
+            );
 
-          toast.success(" Payment Successful & Order Placed!");
+            if (verifyRes.data.success) {
+              await saveOrder({
+                paymentMethod: "Razorpay",
+                paymentStatus: "PAID",
+                razorpayPaymentId: response.razorpay_payment_id,
+              });
+
+              toast.success(" Payment Successful & Order Placed!");
+            }
+          } catch (err) {
+            console.error("PAYMENT FLOW ERROR:", err.response?.data || err);
+            toast.error(err.response?.data?.message || err.message || " Payment verification failed");
+          }
         },
 
         prefill: {
@@ -146,12 +163,18 @@ const Cart = () => {
           color: "#1976d2",
         },
       };
+      console.log("RAZORPAY DATA:", data);
+console.log("OPTIONS:", options);
 
       const rzp = new window.Razorpay(options);
 
-      rzp.on("payment.failed", function () {
-        toast.error("Payment failed");
-      });
+      rzp.on("payment.failed", function (response) {
+  console.log("FAILED:", response.error);
+
+  toast.error(
+    response.error.description || "Payment failed"
+  );
+});
 
       rzp.on("modal.closed", function () {
         toast.error(" Payment cancelled");
@@ -230,138 +253,229 @@ const Cart = () => {
   }
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" mb={3}>
+    <Container sx={{ mt: { xs: 2, sm: 4 }, mb: 8, px: { xs: 1.5, sm: 3 } }}>
+      <Typography
+        variant="h4"
+        mb={3}
+        sx={{
+          fontSize: { xs: "1.8rem", sm: "2.2rem" },
+          fontWeight: "bold",
+        }}
+      >
         Your Cart
       </Typography>
 
-      {/* CART ITEMS */}
-      <Grid container spacing={2}>
-        {cart.map((item) => (
-          <Grid item xs={12} key={item._id}>
-            <Card>
-              <CardContent
-                sx={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <Box>
-                  <Typography fontWeight="bold">{item.title}</Typography>
-                  <Typography color="success.main">
-                    ₹{item.price}
-                  </Typography>
-                </Box>
+      <Grid container spacing={4}>
+        {/* LEFT COLUMN: Items and Address */}
+        <Grid item xs={12} md={8}>
+          <Typography variant="h6" mb={2} sx={{ fontWeight: "bold" }}>
+            Cart Items ({cart.length})
+          </Typography>
 
-                <Box display="flex" alignItems="center" gap={1}>
-                  <IconButton
-                    disabled={item.qty === 1}
-                    onClick={() => dispatch(decreaseQty(item._id))}
+          <Grid container spacing={2}>
+            {cart.map((item) => (
+              <Grid item xs={12} key={item._id}>
+                <Card sx={{ borderRadius: 2, border: "1px solid #e2e8f0", boxShadow: "none" }}>
+                  <CardContent
+                    sx={{
+                      display: "flex",
+                      flexDirection: { xs: "column", sm: "row" },
+                      alignItems: { xs: "stretch", sm: "center" },
+                      justifyContent: "space-between",
+                      gap: 2,
+                      "&:last-child": { pb: 2 },
+                    }}
                   >
-                    <RemoveIcon />
-                  </IconButton>
+                    {/* Item Info */}
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0 }}>
+                      <img
+                        src={item.images?.[0]?.url || item.image || "/placeholder.png"}
+                        alt={item.title}
+                        style={{
+                          width: "64px",
+                          height: "64px",
+                          objectFit: "contain",
+                          backgroundColor: "#f9f9f9",
+                          borderRadius: "8px",
+                          padding: "4px",
+                          border: "1px solid #e2e8f0",
+                        }}
+                      />
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography fontWeight="bold" sx={{ fontSize: { xs: "0.95rem", sm: "1.1rem" } }}>
+                          {item.title}
+                        </Typography>
+                        <Typography color="success.main" sx={{ fontWeight: "bold", mt: 0.5 }}>
+                          ₹{item.price}
+                        </Typography>
+                      </Box>
+                    </Box>
 
-                  <Typography>{item.qty}</Typography>
+                    {/* Quantity & Action Group */}
+                    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2 }}>
+                      <Box
+                        display="flex"
+                        alignItems="center"
+                        gap={1}
+                        sx={{
+                          bgcolor: "#f0f2f2",
+                          borderRadius: "8px",
+                          border: "1px solid #d5d9d9",
+                          p: 0.5,
+                        }}
+                      >
+                        <IconButton
+                          disabled={item.qty === 1}
+                          onClick={() => dispatch(decreaseQty(item._id))}
+                          size="small"
+                        >
+                          <RemoveIcon fontSize="small" />
+                        </IconButton>
 
-                  <IconButton
-                    onClick={() => dispatch(increaseQty(item._id))}
-                  >
-                    <AddIcon />
-                  </IconButton>
-                </Box>
+                        <Typography sx={{ fontWeight: "bold", px: 1 }}>{item.qty}</Typography>
 
-                <IconButton
-                  color="error"
-                  onClick={() =>
-                    dispatch(removeFromCart(item._id))
-                  }
-                >
-                  <DeleteIcon />
-                </IconButton>
-              </CardContent>
-            </Card>
+                        <IconButton
+                          onClick={() => dispatch(increaseQty(item._id))}
+                          size="small"
+                        >
+                          <AddIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+
+                      <IconButton
+                        color="error"
+                        onClick={() => dispatch(removeFromCart(item._id))}
+                        size="medium"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </Box>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
 
-      {/* ADDRESS SECTION */}
-      <Box mt={4}>
-        <Typography variant="h6" mb={2}>
-          Delivery Address
-        </Typography>
+          {/* ADDRESS SECTION */}
+          <Box mt={4}>
+            <Typography variant="h6" mb={2} sx={{ fontWeight: "bold" }}>
+              Delivery Address
+            </Typography>
 
-        {loadingAddresses ? (
-          <Typography>Loading addresses...</Typography>
-        ) : addresses.length === 0 ? (
-          <Button
-            variant="contained"
-            onClick={() => setOpenAddressModal(true)}
-          >
-            ➕ Add Address
-          </Button>
-        ) : (
-          <AddressSelector
-            addresses={addresses}
-            selectedAddressId={selectedAddress?._id}
-            onSelect={setSelectedAddress}
-            onAddNew={() => {
-              setEditingAddress(null);
-              setOpenAddressModal(true);
+            {loadingAddresses ? (
+              <Typography>Loading addresses...</Typography>
+            ) : addresses.length === 0 ? (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => setOpenAddressModal(true)}
+                sx={{ borderRadius: 2 }}
+              >
+                ➕ Add Address
+              </Button>
+            ) : (
+              <AddressSelector
+                addresses={addresses}
+                selectedAddressId={selectedAddress?._id}
+                onSelect={setSelectedAddress}
+                onAddNew={() => {
+                  setEditingAddress(null);
+                  setOpenAddressModal(true);
+                }}
+                onEdit={handleEditAddress}
+              />
+            )}
+          </Box>
+        </Grid>
+
+        {/* RIGHT COLUMN: Order Summary Card */}
+        <Grid item xs={12} md={4}>
+          <Card
+            sx={{
+              p: 3,
+              position: "sticky",
+              top: 20,
+              borderRadius: 3,
+              border: "1px solid #e2e8f0",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.05)",
             }}
-            onEdit={handleEditAddress}
-          />
-        )}
-      </Box>
-
-      {/* TOTAL */}
-      <Typography
-        variant="h5"
-        textAlign="right"
-        fontWeight="bold"
-        mt={3}
-      >
-        Total: ₹{totalAmount}
-      </Typography>
-
-      {/* PAYMENT METHOD */}
-      <Box mt={3}>
-        <Typography variant="h6">Payment Method</Typography>
-
-        <Box display="flex" gap={2} mt={1}>
-          <Button
-            variant={paymentMethod === "ONLINE" ? "contained" : "outlined"}
-            onClick={() => setPaymentMethod("ONLINE")}
           >
-            Pay Online
-          </Button>
+            <Typography variant="h6" mb={2} sx={{ fontWeight: "bold" }}>
+              Order Summary
+            </Typography>
 
-          <Button
-            variant={paymentMethod === "COD" ? "contained" : "outlined"}
-            onClick={() => setPaymentMethod("COD")}
-          >
-            Cash on Delivery
-          </Button>
-        </Box>
-      </Box>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+              <Typography color="text.secondary">Items Total:</Typography>
+              <Typography fontWeight="bold">₹{totalAmount}</Typography>
+            </Box>
 
-      {/* PLACE ORDER */}
-      <Button
-        variant="contained"
-        color="success"
-        fullWidth
-        sx={{ mt: 3, py: 1.5 }}
-        disabled={!selectedAddress || loadingAddresses}
-        onClick={() =>
-          paymentMethod === "ONLINE"
-            ? makePayment()
-            : placeCODOrder()
-        }
-      >
-        {paymentMethod === "ONLINE"
-          ? "Pay Now"
-          : "Place Order (COD)"}
-      </Button>
+            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+              <Typography color="text.secondary">Delivery Charge:</Typography>
+              <Typography fontWeight="bold" color="success.main">
+                FREE
+              </Typography>
+            </Box>
+
+            <Divider sx={{ my: 2 }} />
+
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                Total Amount:
+              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: "black", color: "#b12704" }}>
+                ₹{totalAmount}
+              </Typography>
+            </Box>
+
+            {/* PAYMENT METHOD */}
+            <Box mb={4}>
+              <Typography variant="body2" mb={1} sx={{ fontWeight: "bold", color: "text.secondary" }}>
+                Payment Method
+              </Typography>
+
+              <Box display="flex" flexDirection="column" gap={1.5}>
+                <Button
+                  variant={paymentMethod === "ONLINE" ? "contained" : "outlined"}
+                  color="primary"
+                  onClick={() => setPaymentMethod("ONLINE")}
+                  sx={{ borderRadius: 2, py: 1 }}
+                  fullWidth
+                >
+                  💳 Pay Online
+                </Button>
+
+                <Button
+                  variant={paymentMethod === "COD" ? "contained" : "outlined"}
+                  color="primary"
+                  onClick={() => setPaymentMethod("COD")}
+                  sx={{ borderRadius: 2, py: 1 }}
+                  fullWidth
+                >
+                  💵 Cash on Delivery
+                </Button>
+              </Box>
+            </Box>
+
+            {/* PLACE ORDER */}
+            <Button
+              variant="contained"
+              color="success"
+              fullWidth
+              sx={{
+                py: 1.8,
+                borderRadius: 2,
+                fontWeight: "bold",
+                fontSize: "1rem",
+                textTransform: "none",
+              }}
+              disabled={!selectedAddress || loadingAddresses}
+              onClick={() => (paymentMethod === "ONLINE" ? makePayment() : placeCODOrder())}
+            >
+              {paymentMethod === "ONLINE" ? "Proceed to Pay" : "Place Order (COD)"}
+            </Button>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* ADDRESS MODAL */}
       <AddAddressModal

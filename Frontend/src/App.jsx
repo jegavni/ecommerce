@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { getCurrentUser } from "./Redux/slices/userSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
@@ -24,6 +24,7 @@ import SellerDashboard from "./pages/sellerDashboard";
 import Search from "./pages/search.jsx";
 import RecentlyViewedPage from "./pages/RecentlyViewed.jsx";
 import API from "./api/axios";
+import Layout from "./components/Layout";
 
 
 
@@ -34,9 +35,9 @@ function App() {
   /* ===== AUTH CHECK ON APP START ===== */
   const dispatch = useDispatch();
 
-// useEffect(() => {
-//   dispatch(getCurrentUser());
-// }, [dispatch]);
+  useEffect(() => {
+    dispatch(getCurrentUser());
+  }, [dispatch]);
 
   /* ===== FETCH PRODUCTS ===== */
   useEffect(() => {
@@ -53,27 +54,33 @@ function App() {
     <>
       <Routes>
 
-  {/* PUBLIC */}
-  <Route path="/" element={<Home products={products} />} />
+  {/* PUBLIC WITHOUT HEADER */}
   <Route path="/login" element={<Login />} />
   <Route path="/register" element={<Register />} />
   <Route path="/ForgotPassword" element={<ForgotPassword />} />
-  <Route path="/product/:id" element={<ProductDetails />} />
-  <Route path="/search" element={<Search products={products} />} />
 
-  {/* PROTECTED */}
-  <Route element={<ProtectedRoute />}>
-    <Route path="/orders" element={<Orders />} />
-    <Route path="/cart" element={<Cart />} />
-    <Route path="/pay" element={<PayPage />} />
-    <Route path="/addproduct" element={<AddProduct />} />
-    <Route path="/seller/product/edit/:id" element={<AddProduct />} />
-    <Route path="/sellerForm" element={<SellerForm />} />
-    <Route path="/seller/dashboard" element={<SellerDashboard />} />
-    <Route path="/adminproduct" element={<AdminProduct />} />
-    <Route path="/recentlyViewed" element={<RecentlyViewedPage />} />
-    <Route path="/reset-password/:token" element={<ResetPassword />} />
+  {/* MAIN LAYOUT WRAPPER */}
+  <Route element={<Layout />}>
+    <Route path="/" element={<Home products={products} />} />
+    <Route path="/product/:id" element={<ProductDetails />} />
+    <Route path="/search" element={<Search products={products} />} />
+
+    {/* PROTECTED */}
+    <Route element={<ProtectedRoute />}>
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/pay" element={<PayPage />} />
+      <Route path="/addproduct" element={<AddProduct />} />
+      <Route path="/seller/product/edit/:id" element={<AddProduct />} />
+      <Route path="/sellerForm" element={<SellerForm />} />
+      <Route path="/seller/dashboard" element={<SellerDashboard />} />
+      <Route path="/adminproduct" element={<AdminProduct />} />
+      <Route path="/recentlyViewed" element={<RecentlyViewedPage />} />
+    </Route>
   </Route>
+
+  <Route path="/reset-password/:token" element={<ResetPassword />} />
+  <Route path="*" element={<Navigate to="/" replace />} />
 
 </Routes>
 

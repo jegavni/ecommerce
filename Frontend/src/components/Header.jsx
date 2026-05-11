@@ -26,18 +26,34 @@ const Header = () => {
   const role = user?.role;
 
   /* 🔍 SEARCH */
-  const handleSearch = () => {
-    const trimmed = searchTerm.trim();
+/* LIVE SEARCH */
+/* SEARCH */
+const handleSearch = () => {
+  const trimmed = searchTerm.trim();
 
-    if (!trimmed && category === "all") return; //  avoid empty search
+  if (!trimmed && category === "all") return;
 
-    const query = new URLSearchParams();
+  const query = new URLSearchParams();
 
-    if (trimmed) query.append("keyword", trimmed);
-    if (category !== "all") query.append("category", category);
+  if (trimmed) {
+    query.append("keyword", trimmed);
+  }
 
-    navigate(`/search?${query.toString()}`);
-  };
+  if (category !== "all") {
+    query.append("category", category);
+  }
+
+  navigate(`/search?${query.toString()}`);
+};
+
+/* LIVE SEARCH */
+useEffect(() => {
+  const timer = setTimeout(() => {
+    handleSearch();
+  }, 500);
+
+  return () => clearTimeout(timer);
+}, [searchTerm, category]);
 
   /* FETCH DEFAULT ADDRESS */
   useEffect(() => {
@@ -96,57 +112,83 @@ const Header = () => {
           color: "white",
           display: "flex",
           alignItems: "center",
-          gap: 2,
-          px: 2,
-          py: 1,
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: { xs: 1, sm: 2 },
+          px: { xs: 1.5, sm: 3 },
+          py: 1.5,
         }}
       >
-        {/* MENU */}
-        <IconButton onClick={() => setDrawerOpen(true)} sx={{ color: "white" }}>
-          <MenuIcon />
-        </IconButton>
-
-        {/* LOGO */}
-        <Typography
-          variant="h6"
-          sx={{ cursor: "pointer", fontWeight: "bold" }}
-          onClick={() => navigate("/")}
-        >
-          EasyShop
-        </Typography>
-
-        {/* ADDRESS */}
-        {defaultAddress && (
-          <Box
-            sx={{ display: "flex", alignItems: "center", cursor: "pointer" }}
-            onClick={() => navigate("/addresses")}
-          >
-            <LocationOnIcon fontSize="small" sx={{ mr: 0.5 }} />
-            <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
-              <Typography variant="caption">Deliver to</Typography>
-              <Typography variant="body2" fontWeight="bold">
-                {defaultAddress.name} - {defaultAddress.city}
-              </Typography>
-            </Box>
-          </Box>
-        )}
-
-
-
-        {/*  SEARCH BAR (shadcn styled) */}
+        {/* LEFT SECTION (MENU + LOGO + ADDRESS) */}
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
-            width: "40%",
+            gap: { xs: 0.5, sm: 2 },
+            order: 1,
+          }}
+        >
+          {/* MENU */}
+          <IconButton
+            onClick={() => setDrawerOpen(true)}
+            sx={{ color: "white", p: { xs: 0.5, sm: 1 } }}
+          >
+            <MenuIcon />
+          </IconButton>
+
+          {/* LOGO */}
+          <Typography
+            variant="h6"
+            sx={{
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+            }}
+            onClick={() => navigate("/")}
+          >
+            EasyShop
+          </Typography>
+
+          {/* ADDRESS */}
+          {defaultAddress && (
+            <Box
+              sx={{
+                display: { xs: "none", md: "flex" },
+                alignItems: "center",
+                cursor: "pointer",
+                ml: 1,
+              }}
+              onClick={() => navigate("/addresses")}
+            >
+              <LocationOnIcon fontSize="small" sx={{ mr: 0.5, color: "#ff9900" }} />
+              <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                <Typography variant="caption" sx={{ color: "#ccc" }}>
+                  Deliver to
+                </Typography>
+                <Typography variant="body2" fontWeight="bold">
+                  {defaultAddress.name} - {defaultAddress.city}
+                </Typography>
+              </Box>
+            </Box>
+          )}
+        </Box>
+
+        {/* MIDDLE SECTION: SEARCH BAR */}
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            width: { xs: "100%", md: "45%" },
+            order: { xs: 3, md: 2 },
             gap: 1,
+            mt: { xs: 1, md: 0 },
           }}
         >
           {/* Category */}
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="h-10 px-2 text-sm border rounded-md bg-black relative z-50"
+            className="h-10 px-2 text-sm border rounded-md bg-black text-white relative z-50"
           >
             <option value="all">All</option>
             <option value="men">Men</option>
@@ -159,44 +201,171 @@ const Header = () => {
             placeholder="Search products..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            className="bg-black text-white placeholder:text-gray-500 border"
+            className="bg-black text-white placeholder:text-gray-500 border flex-grow"
           />
 
           {/* Search Button */}
           <Button
             onClick={handleSearch}
-            className="bg-yellow-500 hover:bg-yellow-600 text-black"
+            className="bg-yellow-500 hover:bg-yellow-600 text-black h-10 px-4"
           >
             🔍
           </Button>
         </Box>
 
-        <Box sx={{ flex: 1 }} />
-
-        {/* USER */}
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-          <Typography variant="body2">
-            {user ? `Hello, ${user.name}` : "Hello, Sign in"}
-          </Typography>
-
-          {user ? (
-            <Typography sx={{ cursor: "pointer" }} onClick={handleLogout}>
-              Logout
-            </Typography>
-          ) : (
-            <Typography sx={{ cursor: "pointer" }} onClick={() => navigate("/login")}>
-              Login / Register
-            </Typography>
-          )}
-        </Box>
-
-        {/* CART */}
+        {/* RIGHT SECTION (USER + CART) */}
         <Box
-          sx={{ cursor: "pointer", fontWeight: "bold" }}
-          onClick={() => navigate("/cart")}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: { xs: 1.5, sm: 3 },
+            order: { xs: 2, md: 3 },
+          }}
         >
-          🛒 Cart ({cartItems?.length || 0})
+          {/* USER TAB */}
+          {user ? (
+            /* ── Logged-in: avatar + name + sign-out ── */
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                cursor: "pointer",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 2,
+                px: { xs: 1, sm: 1.5 },
+                py: 0.6,
+                transition: "border-color 0.2s, background 0.2s",
+                "&:hover": {
+                  borderColor: "#f59e0b",
+                  background: "rgba(245,158,11,0.08)",
+                },
+              }}
+            >
+              {/* Avatar circle */}
+              <Box
+                sx={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #f59e0b, #ef4444)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontWeight: 800,
+                  fontSize: 14,
+                  color: "#fff",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 8px rgba(245,158,11,0.4)",
+                }}
+              >
+                {user.name?.charAt(0).toUpperCase()}
+              </Box>
+
+              {/* Name + Sign out */}
+              <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: "0.7rem", sm: "0.8rem" },
+                    fontWeight: 700,
+                    color: "#fff",
+                    maxWidth: { xs: 64, sm: 100 },
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {user.name}
+                </Typography>
+                <Typography
+                  onClick={handleLogout}
+                  sx={{
+                    fontSize: "0.65rem",
+                    color: "#fca5a5",
+                    fontWeight: 600,
+                    "&:hover": { color: "#ef4444", textDecoration: "underline" },
+                    transition: "color 0.15s",
+                  }}
+                >
+                  Sign Out
+                </Typography>
+              </Box>
+            </Box>
+          ) : (
+            /* ── Guest: Sign In button ── */
+            <Box
+              onClick={() => navigate("/login")}
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 0.8,
+                cursor: "pointer",
+                border: "1.5px solid #f59e0b",
+                borderRadius: 2,
+                px: { xs: 1.2, sm: 1.8 },
+                py: 0.7,
+                background: "rgba(245,158,11,0.12)",
+                transition: "background 0.2s, transform 0.15s",
+                "&:hover": {
+                  background: "#f59e0b",
+                  transform: "translateY(-1px)",
+                  "& .signin-text": { color: "#111" },
+                  "& .signin-icon": { color: "#111" },
+                },
+              }}
+            >
+              {/* Person icon */}
+              <Box
+                className="signin-icon"
+                sx={{
+                  fontSize: 18,
+                  color: "#f59e0b",
+                  lineHeight: 1,
+                  transition: "color 0.2s",
+                }}
+              >
+                👤
+              </Box>
+              <Box sx={{ display: "flex", flexDirection: "column", lineHeight: 1 }}>
+                <Typography
+                  className="signin-text"
+                  sx={{
+                    fontSize: "0.65rem",
+                    color: "#d1d5db",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  Hello, Guest
+                </Typography>
+                <Typography
+                  className="signin-text"
+                  sx={{
+                    fontSize: { xs: "0.72rem", sm: "0.82rem" },
+                    fontWeight: 800,
+                    color: "#f59e0b",
+                    transition: "color 0.2s",
+                  }}
+                >
+                  Sign In
+                </Typography>
+              </Box>
+            </Box>
+          )}
+
+          {/* CART */}
+          <Box
+            sx={{
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: { xs: "0.875rem", sm: "1rem" },
+              display: "flex",
+              alignItems: "center",
+              gap: 0.5,
+            }}
+            onClick={() => navigate("/cart")}
+          >
+            🛒 <span className="hidden sm:inline">Cart</span> ({cartItems?.length || 0})
+          </Box>
         </Box>
       </Box>
 

@@ -5,12 +5,11 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Rating } from "@mui/material";
 
-import Header from "../components/Header";
 import { HomeSection } from "../components/HomeSection";
-import AIShopAssistant from "../components/AIShopAssistant";
 import { logoutUser } from "../Redux/slices/userSlice";
 import { Card, CardContent } from "@/components/ui/card";
 import { addToCart } from "../Redux/slices/cartSlice";
+import HeroBanner from "../components/HeroBanner";
 
 
 const HomePage = ({ products = [] }) => {
@@ -99,38 +98,18 @@ const HomePage = ({ products = [] }) => {
   };
 
   return (
-    <div className="bg-gray-200 min-h-screen">
-
-      {/* HEADER */}
-      <Header
-        products={products}
-        activeSection={activeSection}
-        setActiveSection={setActiveSection}
-      />
+    <div className="bg-gray-200 min-h-screen py-6">
 
       {/* CENTER CONTAINER */}
-      <div className="max-w-[1600px] mx-auto px-6 pb-20">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pb-20">
 
         {activeSection === "home" && (
           <>
-            {/* HERO BANNER */}
-            <div className="bg-gradient-to-r from-blue-300 via-blue-200 to-transparent rounded-xl p-8 flex items-center justify-between mb-6">
-              <div>
-                <h2 className="text-2xl font-bold">
-                  Get set & fly to Dubai
-                </h2>
-                <p className="text-gray-700">Starting ₹7,599</p>
-              </div>
-
-              <img
-                src="https://picsum.photos/400/300"
-                className="h-24 object-contain"
-                alt="banner"
-              />
-            </div>
+            {/* HERO BANNER — AI-powered dynamic ads */}
+            <HeroBanner products={products} />
 
             {/* CATEGORY SECTION */}
-            <div className="-mt-20 relative z-10 grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
+            <div className="mt-4 relative z-10 grid gap-5 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-10">
 
               {user && recentlyViewed.length > 0 && (
                 <HomeSection
@@ -158,7 +137,7 @@ const HomePage = ({ products = [] }) => {
             </div>
 
             {/* PRODUCT GRID */}
-            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
 
               {products.map((product, index) => {
 
@@ -291,7 +270,6 @@ const HomePage = ({ products = [] }) => {
 
       </div>
 
-      <AIShopAssistant />
     </div>
   );
 };

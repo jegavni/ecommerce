@@ -8,16 +8,17 @@ const router = express.Router();
 /* CREATE ORDER */
 router.post("/", async (req, res) => {
   try {
-    const { userId, items, totalAmount } = req.body;
+    const { userId, items, totalAmount, paymentMethod, paymentStatus, razorpayPaymentId, address: frontendAddress } = req.body;
 
     const userDoc = await User.findById(userId);
     if (!userDoc) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    const address =
-      userDoc.addresses?.find(a => a.isDefault) ||
-      userDoc.addresses?.[0];
+    let address = frontendAddress;
+    if (!address) {
+      address = userDoc.addresses?.find(a => a.isDefault) || userDoc.addresses?.[0];
+    }
 
     if (!address) {
       return res.status(400).json({ message: "No address found" });
@@ -33,38 +34,42 @@ router.post("/", async (req, res) => {
       isDefault: address.isDefault,
     };
 
+    // 🔥 CHECK PRODUCT STOCK FIRST
+    const updatedProducts = [];
+    for (let item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product) continue;
+
+      const productStock = Number(product.stock) || 0;
+      const orderQuantity = Number(item.qty) || 0;
+
+      if (productStock < orderQuantity) {
+        return res.status(400).json({
+          message: `Insufficient stock for ${product.title}`,
+        });
+      }
+
+      product.stock = productStock - orderQuantity;
+      updatedProducts.push(product);
+    }
+
     // 🔥 CREATE ORDER
     const order = new Order({
       user: userDoc._id,
       items,
       totalAmount,
       deliveryAddress,
-      paymentMethod: "COD",
-      paymentStatus: "PENDING",
+      paymentMethod: paymentMethod || "COD",
+      paymentStatus: paymentStatus || "PENDING",
+      razorpayPaymentId: razorpayPaymentId || undefined,
     });
 
     await order.save();
 
     // 🔥 UPDATE PRODUCT STOCK
-for (let item of items) {
-  const product = await Product.findById(item.productId);
-  if (!product) continue;
-
-  const productStock = Number(product.stock) || 0;
-  const orderQuantity = Number(item.qty) || 0; // ⚠ use qty
-
-  if (productStock < orderQuantity) {
-    return res.status(400).json({
-      message: `Insufficient stock for ${product.title}`,
-    });
-  }
-
-  product.stock = productStock - orderQuantity;
-  await product.save();
-  console.log(`Stock updated for ${product.title}: ${product.stock}`);
-}
-
-
+    for (let product of updatedProducts) {
+      await product.save();
+    }
 
     res.status(201).json({
       message: "Order placed successfully",
@@ -74,7 +79,6 @@ for (let item of items) {
     console.error("ORDER ERROR:", err);
     res.status(500).json({ message: err.message });
   }
-  
 });
 
 
@@ -117,36 +121,7 @@ router.put("/users/:id", async (req, res) => {
 });
 
 
-router.post("/", async (req, res) => {
-  try {
-    const { userId, items, totalAmount } = req.body;
 
-    const userDoc = await User.findById(userId);
-    if (!userDoc) return res.status(404).json({ message: "User not found" });
-
-    const address =
-      userDoc.addresses?.find(a => a.isDefault) ||
-      userDoc.addresses?.[0];
-
-    if (!address)
-      return res.status(400).json({ message: "No address found" });
-
-    const order = new Order({
-      user: userDoc._id,   // ✅ CRITICAL FIX
-      items,
-      totalAmount,
-      deliveryAddress: address.toObject ? address.toObject() : address,
-      paymentMethod: "COD",
-      paymentStatus: "PENDING",
-    });
-
-    await order.save();
-    res.status(201).json(order);
-  } catch (err) {
-    console.error("ORDER ERROR:", err);
-    res.status(500).json({ message: err.message });
-  }
-});
 
 
 
