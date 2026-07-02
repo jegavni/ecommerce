@@ -1,62 +1,102 @@
-  //  HELPER: Call Google Gemini API
 
-import OpenAI from "openai";
+import { GoogleGenAI } from "@google/genai";
+import { searchProduct } from "../Services/ShoppingService.js";
 
-const client = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+const client = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
 });
 
-async function callOpenAI(prompt, { maxTokens = 800 } = {}) {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error("OPENAI_API_KEY is not set in .env");
+
+const models = [
+  "gemini-2.5-flash",
+  "gemini-2.5-pro",
+  "gemini-2.5-flash-lite",
+  "gemini Embedding",
+];
+
+async function callGemini(prompt, { maxTokens = 800 } = {}) {
+
+  console.log("maxTokens",maxTokens);
+
+  for (const model of models) {
+    try {
+      const response = await client.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          temperature: 0.4,
+          topP: 0.9,
+          maxOutputTokens: 600,
+          thinkingConfig: {
+            thinkingBudget: 0,
+          },
+          responseMimeType: "application/json",
+        },
+      });
+      console.log(response, { depth: null });
+      console.log(`Using model: ${model}`);
+      return response.text.trim();
+
+    } catch (err) {
+      if (err.status === 429) {
+        console.log(`${model} rate limited. Trying next model...`);
+        continue;
+      }
+
+      throw err;
+    }
   }
 
-  const response = await client.responses.create({
-    model: "gpt-5-mini",
-    input: prompt,
-    max_output_tokens: maxTokens,
-  });
-
-  return response.output_text.trim();
+  throw new Error("All Gemini models are currently rate limited.");
 }
-  //  Gemini sometimes wraps JSON in markdown fences
+//  Gemini sometimes wraps JSON in markdown fences
 
 function extractJSON(text) {
-  // Try to extract JSON from markdown code fences
-  const fenceMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenceMatch) {
-    return JSON.parse(fenceMatch[1].trim());
+  text = text.replace(/```json/g, "").replace(/```/g, "").trim();
+
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+
+  if (start === -1 || end === -1) {
+    throw new Error("No JSON found");
   }
-  // Try direct parse
-  return JSON.parse(text);
+
+  return JSON.parse(text.substring(start, end + 1));
 }
 
-/* =============================================
-   1. AI Chat Endpoint (Gemini-powered)
-   POST /api/ai/chat
-============================================= */
+
 export const aiChat = async (req, res) => {
   try {
     const { message, products } = req.body;
 
     const productContext = products?.length
       ? `Available products:\n${products
-          .slice(0, 8)
-          .map((p) => `${p.title} - ₹${p.price}`)
-          .join("\n")}`
+        .slice(0, 8)
+        .map((p) => `${p.title} - ₹${p.price}`)
+        .join("\n")}`
       : "";
 
-    const prompt = `You are a helpful ecommerce shopping assistant for an Indian online store called EasyShop.
-Help the user choose products. Be friendly, concise and practical. All prices are in INR (₹).
+    const prompt = `You are EasyShop's AI Product Expert.
+
+You help users:
+- Explain any product and its features.
+- Compare products.
+- Recommend products based on budget and needs.
+- Suggest alternatives.
+- Answer questions about specifications, pros and cons, and buying advice.
+- When available, use the product list below as additional context.
+
+Be friendly, accurate, and concise.
+Limit replies to 3–5 sentences.
+All prices are in INR (₹).
 
 ${productContext}
 
-User message:
+User question:
 ${message}
+`;
 
-Reply in a helpful, concise way (maximum 3-4 sentences).`;
-
-    const reply = await callOpenAI(prompt, {
+    const reply = await callGemini(prompt, {
       maxTokens: 200,
     });
 
@@ -73,226 +113,214 @@ Reply in a helpful, concise way (maximum 3-4 sentences).`;
   }
 };
 
-/* =============================================
-   2. AI Price Comparison Endpoint (Gemini-powered)
-   POST /api/ai/compare-price
-   Body: { productName, price, category, brand }
-============================================= */
+
 export const comparePrice = async (req, res) => {
   try {
     const { productName, price, category, brand } = req.body;
 
+    // Validate request
     if (!productName || !price) {
-      return res.status(400).json({ message: "productName and price are required" });
+      return res.status(400).json({
+        message: "productName and price are required",
+      });
     }
 
-    // Build category-aware site list
-    const allSites = [
-      { name: "Amazon.in",  key: "amazon",   searchUrl: `https://www.amazon.in/s?k=${encodeURIComponent(productName)}`,   logo: "https://logo.clearbit.com/amazon.in",   categories: ["all"] },
-      { name: "Flipkart",   key: "flipkart",  searchUrl: `https://www.flipkart.com/search?q=${encodeURIComponent(productName)}`, logo: "https://logo.clearbit.com/flipkart.com", categories: ["all"] },
-      { name: "Meesho",     key: "meesho",    searchUrl: `https://www.meesho.com/search?q=${encodeURIComponent(productName)}`,   logo: "https://logo.clearbit.com/meesho.com",  categories: ["all"] },
-      { name: "Snapdeal",   key: "snapdeal",  searchUrl: `https://www.snapdeal.com/search?keyword=${encodeURIComponent(productName)}`, logo: "https://logo.clearbit.com/snapdeal.com", categories: ["all"] },
-      { name: "Myntra",     key: "myntra",    searchUrl: `https://www.myntra.com/${encodeURIComponent(productName)}`,              logo: "https://logo.clearbit.com/myntra.com",  categories: ["fashion", "clothing", "apparel", "shoes", "footwear", "accessories", "bags"] },
-      { name: "Nykaa",      key: "nykaa",     searchUrl: `https://www.nykaa.com/search/result/?q=${encodeURIComponent(productName)}`, logo: "https://logo.clearbit.com/nykaa.com",   categories: ["beauty", "skincare", "makeup", "health", "wellness", "personal care"] },
-      { name: "Croma",      key: "croma",     searchUrl: `https://www.croma.com/searchB?q=${encodeURIComponent(productName)}`,      logo: "https://logo.clearbit.com/croma.com",   categories: ["electronics", "mobile", "laptop", "tv", "appliances", "gadgets"] },
-      { name: "Reliance Digital", key: "reliance", searchUrl: `https://www.reliancedigital.in/search?q=${encodeURIComponent(productName)}`, logo: "https://logo.clearbit.com/reliancedigital.in", categories: ["electronics", "mobile", "laptop", "tv", "appliances"] },
-    ];
+    const currentPrice = Number(price);
 
-    // Filter sites by category relevance
-    const catLower = (category || "").toLowerCase();
-    const selectedSites = allSites.filter(site =>
-      site.categories.includes("all") ||
-      site.categories.some(c => catLower.includes(c))
+    // Get live shopping results
+    const shoppingResults = await searchProduct(productName);
+
+    // Keep only products with valid prices
+    const validResults = shoppingResults.filter(
+      (item) =>
+        item.extracted_price &&
+        !isNaN(item.extracted_price) &&
+        item.extracted_price > 0
     );
 
-    const prompt = `You are a smart Indian e-commerce price comparison AI assistant.
-Given a product and its current price on a local marketplace, analyze if the price is good, fair, or expensive.
-Provide estimated price ranges for the same or similar product on popular Indian shopping sites.
-Be concise and practical. All prices in INR (₹).
+    // Extract keywords from product name
+    const keywords = productName
+      .toLowerCase()
+      .split(/\s+/)
+      .filter((word) => word.length > 2);
 
-Product: "${productName}"
-Brand: ${brand || "Unknown"}
-Category: ${category || "General"}
-Current Price: ₹${price}
+    // Filter products that are similar in title and price
+    const cleanedResults = validResults.filter((item) => {
+      const title = item.title?.toLowerCase() || "";
 
-Analyze the price and respond with ONLY valid JSON (no markdown, no extra text) in this exact format:
-{
-  "verdict": "good_deal" or "fair_price" or "overpriced",
-  "verdictLabel": "Great Deal!" or "Fair Price" or "Overpriced",
-  "insight": "2-3 sentence AI analysis of the price with specific advice",
-  "priceRanges": {
-    "amazon": { "min": number, "max": number },
-    "flipkart": { "min": number, "max": number },
-    "meesho": { "min": number, "max": number },
-    "snapdeal": { "min": number, "max": number },
-    "myntra": { "min": number, "max": number },
-    "nykaa": { "min": number, "max": number },
-    "croma": { "min": number, "max": number },
-    "reliance": { "min": number, "max": number }
-  },
-  "bestSite": "amazon" or "flipkart" or "meesho" or "snapdeal" or "myntra" or "nykaa" or "croma" or "reliance",
-  "savingsTip": "One actionable tip like 'Check Flipkart during sale season for up to 30% off'"
-}`;
+      const keywordMatches = keywords.filter((word) =>
+        title.includes(word)
+      ).length;
 
-const rawText = await callOpenAI(prompt, {
-  maxTokens: 600,
-});
+      return (
+        keywordMatches >= Math.ceil(keywords.length / 2) &&
+        item.extracted_price >= currentPrice * 0.6 &&
+        item.extracted_price <= currentPrice * 1.4
+      );
+    });
 
-    let aiData;
-    try {
-      aiData = extractJSON(rawText);
-    } catch {
-      aiData = {
+    // No comparable products found
+    if (cleanedResults.length === 0) {
+      return res.json({
+        productName,
+        currentPrice,
         verdict: "fair_price",
         verdictLabel: "Fair Price",
-        insight: "This appears to be a reasonably priced product. We recommend comparing on Amazon.in and Flipkart for the best deals.",
-        priceRanges: {},
-        bestSite: "amazon",
-        savingsTip: "Keep an eye out for sale events like Big Billion Day or Great Indian Festival for better prices."
+        insight: "No comparable products were found online.",
+        savingsTip: "Try searching again later.",
+        bestSite: "Unknown",
+        sites: [],
+      });
+    }
+
+    // Calculate market prices
+    const prices = cleanedResults.map((item) => item.extracted_price);
+
+    const lowestPrice = Math.min(...prices);
+    const highestPrice = Math.max(...prices);
+    const averagePrice =
+      prices.reduce((sum, p) => sum + p, 0) / prices.length;
+
+    // Best offer
+    const bestOffer = cleanedResults.reduce((best, item) =>
+      item.extracted_price < best.extracted_price ? item : best
+    );
+
+    const bestSite = bestOffer.source;
+
+    // Verdict
+    let verdict = "";
+    let verdictLabel = "";
+
+    const percentage =
+      ((currentPrice - lowestPrice) / lowestPrice) * 100;
+
+    if (percentage <= 2) {
+      verdict = "good_deal";
+      verdictLabel = "Great Deal!";
+    } else if (percentage <= 10) {
+      verdict = "fair_price";
+      verdictLabel = "Fair Price";
+    } else {
+      verdict = "overpriced";
+      verdictLabel = "Overpriced";
+    }
+
+    // Competitor data for Gemini
+    const competitorData = cleanedResults.slice(0,5).map((item) => ({
+      store: item.source,
+      title: item.title,
+      price: item.extracted_price,
+    }));
+
+    const prompt = `You are an Indian e-commerce expert.
+
+Current Product
+
+Name:
+${productName}
+
+Brand:
+${brand || "Unknown"}
+
+Category:
+${category || "Unknown"}
+
+EasyShop Price:
+₹${currentPrice}
+
+Lowest Market Price:
+₹${lowestPrice}
+
+Highest Market Price:
+₹${highestPrice}
+
+Average Market Price:
+₹${averagePrice.toFixed(0)}
+
+Best Store:
+${bestSite}
+
+Verdict:
+${verdict}
+
+Competitor Prices
+
+${JSON.stringify(competitorData, null, 2)}
+
+The verdict has already been determined.
+
+Do NOT change it.
+
+Explain why this verdict is correct.
+
+Respond ONLY JSON
+
+{
+  "insight": "",
+  "savingsTip": ""
+}`;
+
+    // Gemini analysis
+    const rawText = await callGemini(prompt, {
+      maxTokens: 600,
+    });
+    console.log(rawText);
+
+    let aiData;
+
+    try {
+      aiData = extractJSON(rawText);
+
+
+
+    } catch {
+      aiData = {
+        insight: "Unable to analyze the live prices at the moment.",
+        savingsTip:
+          "Compare prices during major sale events for better savings.",
       };
     }
 
-    // Merge AI price ranges into the site list
-    const sitesWithPrices = selectedSites.map(site => ({
-      ...site,
-      estimatedMin: aiData.priceRanges?.[site.key]?.min ?? null,
-      estimatedMax: aiData.priceRanges?.[site.key]?.max ?? null,
-      isBestDeal: site.key === aiData.bestSite,
+    // Format results for frontend
+    const sites = cleanedResults.map((item) => ({
+      key: item.source
+        ?.toLowerCase()
+        .replace(/\s+/g, "-")
+        .replace(/\./g, ""),
+      name: item.source,
+      title: item.title,
+      price: item.price,
+      extractedPrice: item.extracted_price,
+      image: item.thumbnail,
+      link: item.product_link,
+      isBestDeal:
+        item.source?.toLowerCase() === bestSite?.toLowerCase(),
     }));
 
+    // Response
     res.json({
-      verdict: aiData.verdict || "fair_price",
-      verdictLabel: aiData.verdictLabel || "Fair Price",
-      insight: aiData.insight || "",
-      savingsTip: aiData.savingsTip || "",
-      bestSite: aiData.bestSite || "amazon",
-      sites: sitesWithPrices,
-      currentPrice: price,
       productName,
+      currentPrice,
+      lowestPrice,
+      highestPrice,
+      averagePrice: Number(averagePrice.toFixed(2)),
+      verdict,
+      verdictLabel,
+      insight: aiData.insight,
+      savingsTip: aiData.savingsTip,
+      bestSite,
+      sites,
     });
-
   } catch (error) {
-    console.error("OpenAI Price Comparison Error:", error.message);
-    res.status(500).json({ message: "Price comparison failed. Please try again." });
+    console.error("Compare Price Error:", error);
+
+    res.status(500).json({
+      message: "Price comparison failed.",
+      error: error.message,
+    });
   }
 };
 
-/* =============================================
-   3. AI Dynamic Ad Banner Generator (Gemini-powered)
-   GET /api/ai/ad-banner?categories=electronics,fashion
-============================================= */
-// export const getAdBanner = async (req, res) => {
-//   try {
-//     const categories = req.query.categories
-//       ? req.query.categories.split(",").map(c => c.trim()).filter(Boolean)
-//       : ["general", "electronics", "fashion"];
 
-//     const topProducts = req.query.products
-//       ? req.query.products.split("|").slice(0, 6)
-//       : [];
 
-//     const productHint = topProducts.length
-//       ? `Top products in store: ${topProducts.join(", ")}.`
-//       : "";
-
-//     const prompt = `You are a creative e-commerce marketing AI for an Indian online shopping platform called EasyShop.
-// Generate dynamic, exciting, and culturally relevant promotional banner ad content.
-// All prices in INR (₹). Be creative, punchy, and use emojis effectively.
-
-// Store categories available: ${categories.join(", ")}.
-// ${productHint}
-
-// Generate exactly 3 different promotional banner ads for this store homepage.
-// Each ad should target a different category or theme. Make them vivid, exciting and click-worthy.
-
-// Respond with ONLY valid JSON (no markdown fences, no extra text) in this EXACT format:
-// {
-//   "banners": [
-//     {
-//       "id": 1,
-//       "headline": "Catchy headline (max 8 words)",
-//       "subtext": "Compelling description or offer (max 12 words)",
-//       "cta": "Call-to-action button text (max 4 words)",
-//       "badge": "Optional badge like 'Up to 60% Off' or 'New Arrivals' or 'Flash Deal' (max 4 words)",
-//       "emoji": "One relevant emoji",
-//       "category": "Target category name",
-//       "gradientFrom": "hex color like #1e40af",
-//       "gradientTo": "hex color like #3b82f6",
-//       "textColor": "hex color for text, ensure readable on gradient (e.g. #ffffff or #1a1a1a)",
-//       "accentColor": "hex color for badge/CTA button (e.g. #f59e0b)",
-//       "imageQuery": "Descriptive search term for banner image (e.g. 'luxury electronics gadgets')"
-//     }
-//   ]
-// }`;
-
-// const rawText = await callOpenAI(prompt, {
-//   maxTokens: 700,
-// });
-//     let aiData;
-//     try {
-//       aiData = extractJSON(rawText);
-//     } catch {
-//       // fallback banners if parsing fails
-//       aiData = {
-//         banners: [
-//           {
-//             id: 1,
-//             headline: "Shop Smart, Save Big Today!",
-//             subtext: "Best deals on top products — limited time offers",
-//             cta: "Shop Now",
-//             badge: "Up to 50% Off",
-//             emoji: "🔥",
-//             category: "all",
-//             gradientFrom: "#1e40af",
-//             gradientTo: "#7c3aed",
-//             textColor: "#ffffff",
-//             accentColor: "#f59e0b",
-//             imageQuery: "shopping deals india",
-//           },
-//           {
-//             id: 2,
-//             headline: "New Season, New Styles",
-//             subtext: "Trending fashion at unbeatable prices",
-//             cta: "Explore Now",
-//             badge: "New Arrivals",
-//             emoji: "👗",
-//             category: "fashion",
-//             gradientFrom: "#be185d",
-//             gradientTo: "#9333ea",
-//             textColor: "#ffffff",
-//             accentColor: "#fcd34d",
-//             imageQuery: "fashion clothing india",
-//           },
-//           {
-//             id: 3,
-//             headline: "Power Up Your Tech Life",
-//             subtext: "Latest electronics at incredible prices",
-//             cta: "View Deals",
-//             badge: "Flash Sale",
-//             emoji: "⚡",
-//             category: "electronics",
-//             gradientFrom: "#065f46",
-//             gradientTo: "#0891b2",
-//             textColor: "#ffffff",
-//             accentColor: "#34d399",
-//             imageQuery: "electronics gadgets india",
-//           }
-//         ]
-//       };
-//     }
-
-//     // Attach Unsplash image URLs
-//     const banners = (aiData.banners || []).map((b, i) => ({
-//       ...b,
-//       imageUrl: `https://source.unsplash.com/800x400/?${encodeURIComponent(b.imageQuery || "shopping")}&sig=${Date.now() + i}`,
-//     }));
-
-//     // Cache hint: re-generate every 30 minutes
-//     res.setHeader("Cache-Control", "public, max-age=1800");
-//     res.json({ banners });
-
-//   } catch (error) {
-//     console.error("OpenAI Ad Banner Error:", error);
-//     res.status(500).json({ message: "Failed to generate banners." });
-//   }
-// };

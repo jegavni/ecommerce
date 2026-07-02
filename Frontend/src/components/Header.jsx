@@ -9,6 +9,7 @@ import { logoutUser } from "../Redux/slices/userSlice";
 import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { clearCart } from "../Redux/slices/cartSlice";
 
 const Header = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -25,35 +26,34 @@ const Header = () => {
 
   const role = user?.role;
 
-  /* 🔍 SEARCH */
-/* LIVE SEARCH */
-/* SEARCH */
-const handleSearch = () => {
-  const trimmed = searchTerm.trim();
+  /* LIVE SEARCH */
+  /* SEARCH */
+  const handleSearch = () => {
+    const trimmed = searchTerm.trim();
 
-  if (!trimmed && category === "all") return;
+    if (!trimmed && category === "all") return;
 
-  const query = new URLSearchParams();
+    const query = new URLSearchParams();
 
-  if (trimmed) {
-    query.append("keyword", trimmed);
-  }
+    if (trimmed) {
+      query.append("keyword", trimmed);
+    }
 
-  if (category !== "all") {
-    query.append("category", category);
-  }
+    if (category !== "all") {
+      query.append("category", category);
+    }
 
-  navigate(`/search?${query.toString()}`);
-};
+    navigate(`/search?${query.toString()}`);
+  };
 
-/* LIVE SEARCH */
-useEffect(() => {
-  const timer = setTimeout(() => {
-    handleSearch();
-  }, 500);
+  /* LIVE SEARCH */
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleSearch();
+    }, 500);
 
-  return () => clearTimeout(timer);
-}, [searchTerm, category]);
+    return () => clearTimeout(timer);
+  }, [searchTerm, category]);
 
   /* FETCH DEFAULT ADDRESS */
   useEffect(() => {
@@ -82,6 +82,7 @@ useEffect(() => {
   /* LOGOUT */
   const handleLogout = async () => {
     await dispatch(logoutUser());
+    dispatch(clearCart());
     navigate("/login");
   };
 
@@ -364,7 +365,9 @@ useEffect(() => {
             }}
             onClick={() => navigate("/cart")}
           >
-            🛒 <span className="hidden sm:inline">Cart</span> ({cartItems?.length || 0})
+            🛒 {user && (
+              <><span className="hidden sm:inline">Cart</span> ({user ? cartItems?.length : ""})</>)
+            }
           </Box>
         </Box>
       </Box>

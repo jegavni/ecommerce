@@ -11,10 +11,20 @@ import {
   Button,
   CardMedia,
 } from "@mui/material";
+import {
+  ShoppingCart,
+  ShoppingBag,
+Share2,
+  Scale,
+  Heart,
+  HeartOff,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { toast } from "react-toastify";
-import PriceComparePanel from "../components/PriceComparePanel";
+import PriceComparePanel from "../components/priceompare/PriceComparePanel";
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -91,6 +101,7 @@ const ProductDetails = () => {
   const handleAddToCart = () => {
     if (!user) {
       toast.info("Please login to add items");
+      navigate("/login");
       return;
     }
     dispatch(addToCart(product));
@@ -99,6 +110,11 @@ const ProductDetails = () => {
 
   /* ================= COMPARE PRICES ================= */
   const handleComparePrice = useCallback(async () => {
+    if(!user){
+      toast.info("please log in use AI");
+      navigate("/login");
+      return;
+    }
     if (!product) return;
     setCompareOpen(true);
     setCompareLoading(true);
@@ -113,9 +129,15 @@ const ProductDetails = () => {
           price:       product.price,
           category:    product.category || "",
           brand:       product.brand    || "",
+        },
+        {
+          withCredentials:true,
         }
+        
       );
       setCompareData(data);
+console.log(data.sites);
+
     } catch (err) {
       setCompareError(
         err?.response?.data?.message ||
@@ -124,6 +146,7 @@ const ProductDetails = () => {
     } finally {
       setCompareLoading(false);
     }
+    
   }, [product]);
 
   /* ================= DELETE PRODUCT ================= */
@@ -172,7 +195,7 @@ const ProductDetails = () => {
       </div>
     ),
     {
-      autoClose: false, // 👈 important
+      autoClose: false, 
       closeOnClick: false,
     }
   );
@@ -213,12 +236,16 @@ const ProductDetails = () => {
                   );
                 }}
               >
-                {product.inWishlist ? "❤️" : "🤍"}
+                < Heart size={18} ClassName={
+                  product.inWhistlist?"fill-current tetx-red-500":"text-gray-600"
+                }
+                />
               </Button>
 
               <Button
                 variant="contained"
                 size="small"
+                startIcon={<Share2 size={18}/>}
                 onClick={() => {
                   if (navigator.share) {
                     navigator.share({
@@ -231,7 +258,7 @@ const ProductDetails = () => {
                   }
                 }}
               >
-                🔗
+                
               </Button>
             </div>
 
@@ -317,7 +344,7 @@ const ProductDetails = () => {
               color="warning"
               fullWidth
               disabled={!product.stock}
-              startIcon={<ShoppingCartIcon />}
+              startIcon={<ShoppingCart size={18} />}
               onClick={handleAddToCart}
             >
               Add to Cart
@@ -327,11 +354,13 @@ const ProductDetails = () => {
               variant="contained"
               color="success"
               fullWidth
+               startIcon={<ShoppingBag size={18} />}
               disabled={!product.stock}
               onClick={() => {
-                handleAddToCart();
-                navigate("/checkout");
-              }}
+                user?(handleAddToCart(), navigate("/checkout"))
+                :navigate("/login")
+              }
+              }
             >
               Buy Now
             </Button>
@@ -346,7 +375,7 @@ const ProductDetails = () => {
               width: "100%",
               padding: "13px 20px",
               background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)",
-              color: "#fff",
+              color: "white",
               border: "none",
               borderRadius: 12,
               fontWeight: 700,
@@ -368,7 +397,7 @@ const ProductDetails = () => {
               e.currentTarget.style.boxShadow = "0 4px 15px rgba(99,102,241,0.35)";
             }}
           >
-            🔍 Compare Prices on Other Sites
+             Compare Prices on Other Sites
           </button>
         </Grid>
       </Grid>
